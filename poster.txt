@@ -1,0 +1,214 @@
+MINISTRY OF EDUCATION
+
+Aqua Well Robot Solution (AWRS)
+Single descent diagnostics: 360° imaging, in site water quality, casing integrity, gas / liquid leaks detection, multi depth water sampling
+
+IP Application No. SA 1020252223
+Supported by Energy & Water Academy and Tuwaiq Academy
+
+Problem Statement:
+
+Solution:
+
+Groundwater wells are often monitored with
+outdated rope-and-bailer tools, giving limited
+insight into groundwater condition and wellbore
+integrity.
+These methods miss depth-dependent waterquality changes and multi-depth aquifer
+chemistry.
+They can overlook early casing corrosion,
+structural damage, and toxic gas/chemical leaks.
+Worldwide, many wells are already contaminated
+or unreliable, increasing the need for better
+monitoring.
+Without real-time, multi-depth monitoring, issues
+may go unnoticed until failures, risking water
+safety and raising costs.
+
+AWRS is an integrated smart
+well-inspection platform that
+combines multiple structural,
+chemical, and environmental
+sensors into one automated
+device deployed in a single
+descent. It delivers complete realtime diagnostics in one operation.
+
+Figure 1: Traditional methods require
+attendance of work team
+
+In addition, a novel AI-powered
+EIS model was developed to
+detect and classify minerals
+directly inside the well.
+
+Figure 3: AWRS
+autonomous wellinspection robot.
+
+Figure 2: Traditional rope-and-bailer
+groundwater sampling method.
+
+How it works?
+The robot's lower analytical section uses dual
+hydraulic arms to simultaneously collect a 500 ml
+surface sample and a 1 L deep-water sample. Once
+filled, the arms retract the tubes into the chassis for
+operator retrieval.
+
+the robot is
+lowered by a
+rope and motor
+for remote
+descent and
+distant
+measuring
+
+Rotating section to allow
+rotation of the middle part
+of the AWRS robot
+Laser beam
+sensor to
+check
+thickness of
+well pipe
+
+XRF sensor shoots a laser
+beam against metal to check
+its integrity and elements.
+High definition camera allows
+live feed of the pipe condition
+Figure 6: Gas sensing
+and analytical module.
+
+Figure 5: Internal sensor layout
+and rotating inspection module.
+
+Figure 4: Deployment mechanism of the
+AWRS system.
+
+Target Selection
+Lead (Pb) selected as primary target due
+to its high toxicity. Future expansion will
+include more minerals.
+
+This is the
+sampling
+tube that has
+two sizes
+(500 ml for
+surface
+water and 1
+or 2 L for
+deeper water
+sampling.
+gas sensor (H2S, CO2,
+H2 and CH4 and SO2)
+
+Minerals detection
+Data Processing & Feature Extraction
+Gamry Echem Analyst processes raw
+data. Equivalent Circuit Modeling extracts
+Rct, Rs, and CPE as ML feature vectors.
+
+ML Model Evaluation
+Seven classifiers benchmarked: KNN,
+Decision Tree, GBC, AdaBoost, Logistic
+Regression, SVC, and Random Forest.
+
+EIS Measurement
+Impedance Analyzer performs EIS on a
+modified gold sensor. Six replicate
+readings per concentration across 100
+Hz 200 mHz.
+
+Figure 8: Modified gold electrode
+sensor used for EIS measurements.
+
+Figure 7: Dual-volume
+water sampling tube.
+
+Model Selection
+Random Forest Classifier (RFC) selected
+as final model for superior accuracy
+across all tested concentrations.
+
+Figure 9: Laboratory setup for electrochemical
+data acquisition and feature extraction.
+
+Results
+Approach Validation: The results confirmed the success of using
+Machine Learning to decode the
+Electrochemical Impedance Spectroscopy (EIS) data. The highest
+accuracy achieved was 96% (using the
+RFC model), which fulfils high-accuracy spectrum classification.
+Model Selection: Linear (LR) and basic (SVC) models failed to
+achieve the required accuracy (54% 71%). In contrast, Ensemble Methods, especially Random Forest,
+demonstrated a superior capability to
+handle the nature of EIS data, indicating that the relationship
+between the extracted features and the
+concentration is non-linear and complex.
+
+Table 2:
+
+Performance Analysis: The final performance of the
+adopted Random Forest Classifier was rigorously
+assessed using a Confusion Matrix. As shown in Figure
+4, this matrix is critical for analyzing the model's
+reliability in critical detection scenarios. The low rate of
+False Negatives (FN) where the system fails to
+flag a truly hazardous sample confirms the high degree
+of safety and reliability, ensuring the system
+meets high-standard requirements for heavy metal
+detection.
+
+Table 1:
+
+Operational Comparison
+Traditional methods
+
+Our method
+
+Team of 3–5 technicians
+
+Remotely controlled from distance
+
+Random spot rope-and-bailer sampling
+
+monitors water quality in site and also take high
+accurate multi depth sealed samples
+
+Separate gas detection tool
+
+Detect gasses + liquids in one run
+
+Lab transport for mineral testing
+
+Detect minerals in the water
+directly
+
+The process takes days and small
+problems go unnoticed till it escelates
+
+Process takes minutes
+
+References:
+
+SDGs Allignment
+
+Objectives
+Detects early casing damage (corrosion,
+erosion, cracks) to prevent failures
+Identifies hazardous gas/chemical leaks
+sooner to protect groundwater
+Improves monitoring accuracy with multidepth water-quality assessment
+Cuts time-on-site and labor by replacing
+multiple sequential tool deployments with
+one integrated run
+Enhances operator safety by minimizing
+manual/field exposure
+Supports proactive maintenance and faster
+response to contamination risks
+AI-based mineral identification using EIS
+
+Contact us
+
+

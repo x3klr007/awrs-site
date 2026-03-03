@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+    :root {
+        /* Water/Nature Theme - Light Mode */
+        --background: 195 30% 98%;
+        --foreground: 200 15% 8%;
+
+        --card: 190 25% 96%;
+        --card-foreground: 200 15% 8%;
+
+        --popover: 190 25% 96%;
+        --popover-foreground: 200 15% 8%;
+
+        --primary: 195 85% 35%;
+        --primary-foreground: 0 0% 98%;
+
+        --secondary: 180 25% 88%;
+        --secondary-foreground: 200 15% 15%;
+
+        --muted: 185 20% 92%;
+        --muted-foreground: 200 10% 45%;
+
+        --accent: 170 60% 65%;
+        --accent-foreground: 200 15% 8%;
+
+        --destructive: 0 70% 55%;
+        --destructive-foreground: 0 0% 98%;
+
+        --border: 190 15% 85%;
+        --input: 190 15% 85%;
+        --ring: 195 85% 35%;
+
+        --radius: 0.75rem;
+
+        /* Water/Ocean Theme Colors */
+        --ocean-primary: 198 87% 45%;
+        /* Deep Ocean Blue */
+        --ocean-secondary: 191 100% 55%;
+        /* Bright Ocean Blue */
+        --ocean-light: 191 76% 90%;
+        /* Light Ocean Blue */
+        --ocean-dark: 198 87% 20%;
+        /* Dark Ocean Blue */
+        --ocean-glow: 191 100% 75%;
+        /* Ocean Glow */
+
+        --river-primary: 178 85% 38%;
+        /* Teal River */
+        --river-secondary: 172 85% 55%;
+        /* Light Teal */
+        --river-light: 172 45% 92%;
+        /* Very Light Teal */
+        --river-dark: 178 85% 18%;
+        /* Dark Teal */
+
+        --forest-primary: 162 68% 38%;
+        /* Forest Green */
+        --forest-secondary: 155 68% 55%;
+        /* Light Forest Green */
+        --forest-light: 155 35% 92%;
+        /* Very Light Green */
+        --forest-dark: 162 68% 18%;
+        /* Dark Forest Green */
+
+        --water-flow: 185 95% 60%;
+        /* Flowing Water Blue */
+        --water-deep: 220 95% 25%;
+        /* Deep Water Blue */
+
+        /* Water-themed Gradients */
+        --gradient-ocean: linear-gradient(135deg, hsl(var(--ocean-primary)), hsl(var(--ocean-glow)));
+        --gradient-river: linear-gradient(135deg, hsl(var(--river-primary)), hsl(var(--river-secondary)));
+        --gradient-underwater: linear-gradient(180deg, hsl(var(--ocean-light)), hsl(var(--water-deep)));
+        --gradient-surface: linear-gradient(45deg, hsl(var(--ocean-light) / 0.1), hsl(var(--river-light) / 0.1));
+        --gradient-flow: linear-gradient(90deg, hsl(var(--water-flow) / 0.8), hsl(var(--ocean-glow) / 0.6), hsl(var(--water-flow) / 0.8));
+        --gradient-header: linear-gradient(135deg, hsl(var(--water-deep)), hsl(var(--ocean-primary)), hsl(var(--water-flow)));
+
+        /* Water Effects */
+        --shadow-water: 0 8px 32px hsl(var(--ocean-primary) / 0.2);
+        --shadow-deep: 0 12px 40px hsl(var(--water-deep) / 0.25);
+        --glow-water: 0 0 30px hsl(var(--ocean-glow) / 0.4);
+        --glow-flow: 0 0 15px hsl(var(--water-flow) / 0.3);
+
+        /* Smooth Water Animations */
+        --transition-water: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --animation-wave: wave 4s ease-in-out infinite;
+        --animation-flow: flow 6s linear infinite;
+
+        --sidebar-background: 195 20% 95%;
+        --sidebar-foreground: 200 15% 20%;
+        --sidebar-primary: 195 85% 35%;
+        --sidebar-primary-foreground: 0 0% 98%;
+        --sidebar-accent: 190 20% 90%;
+        --sidebar-accent-foreground: 200 15% 15%;
+        --sidebar-border: 190 15% 80%;
+        --sidebar-ring: 195 85% 35%;
+    }
+
+    .dark {
+        /* Water/Nature Theme - Dark Mode */
+        --background: 200 25% 6%;
+        --foreground: 195 15% 95%;
+
+        --card: 200 20% 8%;
+        --card-foreground: 195 15% 95%;
+
+        --popover: 200 20% 8%;
+        --popover-foreground: 195 15% 95%;
+
+        --primary: 195 80% 60%;
+        --primary-foreground: 200 25% 6%;
+
+        --secondary: 200 15% 15%;
+        --secondary-foreground: 195 15% 85%;
+
+        --muted: 200 15% 12%;
+        --muted-foreground: 195 10% 65%;
+
+        --accent: 170 60% 50%;
+        --accent-foreground: 195 15% 95%;
+
+        --destructive: 0 65% 50%;
+        --destructive-foreground: 195 15% 95%;
+
+        --border: 200 15% 18%;
+        --input: 200 15% 18%;
+        --ring: 195 80% 60%;
+
+        --sidebar-background: 200 20% 5%;
+        --sidebar-foreground: 195 15% 85%;
+        --sidebar-primary: 195 80% 60%;
+        --sidebar-primary-foreground: 200 25% 6%;
+        --sidebar-accent: 200 15% 12%;
+        --sidebar-accent-foreground: 195 15% 85%;
+        --sidebar-border: 200 15% 15%;
+        --sidebar-ring: 195 80% 60%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+@keyframes wave {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    25% {
+        transform: translateY(-2px) rotate(0.5deg);
+    }
+
+    50% {
+        transform: translateY(-1px) rotate(0deg);
+    }
+
+    75% {
+        transform: translateY(-3px) rotate(-0.5deg);
+    }
+}
+
+@keyframes flow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+.water-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.water-ripple::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-flow);
+    background-size: 200% 200%;
+    animation: var(--animation-flow);
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+@keyframes badge-blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.badge-blink {
+    animation: badge-blink 2s infinite;
+}

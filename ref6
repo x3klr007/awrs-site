@@ -1,0 +1,449 @@
+/// <reference path="../types/bluetooth.d.ts" />
+
+import { useState, useEffect, useRef } from 'react';
+import CameraFeed from '@/components/CameraFeed';
+import WellIntegritySection from '@/components/WellIntegritySection';
+import WaterIntegritySection from '@/components/WaterIntegritySection';
+import { SensorData } from '@/types/sensor';
+import { Badge } from '@/components/ui/badge';
+import { Wifi, WifiOff, Droplets } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+// Bluetooth UUIDs for HC-05
+const BLUETOOTH_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+const BLUETOOTH_CHAR_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+
+const Index = () => {
+    const { toast } = useToast();
+    const [isConnected, setIsConnected] = useState(false);
+    const [waterLevel, setWaterLevel] = useState(3.2);
+    const [isConnecting, setIsConnecting] = useState(false);
+
+    const bluetoothDeviceRef = useRef<BluetoothDevice | null>(null);
+    const characteristicRef = useRef<BluetoothRemoteGATTCharacteristic | null>(null);
+    const serialPortRef = useRef<any>(null);
+    const dataBufferRef = useRef<string>("");
+    const lastDataTimeRef = useRef<number>(0);
+
+    // Real sensor data from Arduino
+    const [wellIntegritySensors, setWellIntegritySensors] = useState<SensorData[]>([
+        {
+            id: '1',
+            name: 'Temperature',
+            type: 'temperature',
+            value: NaN,
+            unit: '°C',
+            timestamp: new Date(),
+            status: 'offline'
+        },
+        {
+            id: '2',
+            name: 'Humidity',
+            type: 'humidity',
+            value: NaN,
+            unit: '%',
+            timestamp: new Date(),
+            status: 'offline'
+        },
+        {
+            id: '3',
+            name: 'Air Pressure',
+            type: 'air_pressure',
+            value: NaN,
+            unit: 'hPa',
+            timestamp: new Date(),
+            status: 'offline'
+        },
+        {
+            id: '4',
+            name: 'H₂S Gas',
+            type: 'h2s_gas',
+            value: NaN,
+            unit: 'ppm',
+            timestamp: new Date(),
+            status: 'offline'
+        },
+        {
+            id: '5',
+            name: 'CO Gas',
+            type: 'co_gas',
+            value: NaN,
+            unit: 'ppm',
+            timestamp: new Date(),
+            status: 'offline'
+        },
+        {
+            id: '6',
+            name: 'O₂ Gas',
+            type: 'o2_gas',
+            value: NaN,
+            unit: '%',
+            timestamp: new Date(),
+            status: 'offline'
+        }
+    ]);
+
+    const [waterIntegritySensors, setWaterIntegritySensors] = useState<SensorData[]>([
+        {
+            id: '7',
+            name: 'pH Level',
+            type: 'ph',
+            value: NaN,
+            unit: 'pH',
+            timestamp: new Date(),
+            status: 'offline'
+        },
+        {
+            id: '8',
+            name: 'TDS (Minerals)',
+            type: 'tds',
+            value: NaN,
+            unit: 'ppm',
+            timestamp: new Date(),
+            status: 'offline'
+        }
+    ]);
+
+    // Process Arduino data
+    const processArduinoData = (jsonString: string) => {
+        try {
+            const data = JSON.parse(jsonString);
+            console.log("Received data:", data);
+
+            // Validate required fields
+            const required = ['temp', 'pressure', 'humidity', 'tds', 'pH', 'h2s_ppm', 'co_ppm', 'do_mgL'];
+            if (!required.every(key => key in data)) {
+                console.warn("Missing required field:", data);
+                return;
+            }
+
+            // Validate ranges
+            if (data.temp < -50 || data.temp > 100 ||
+                data.pressure < 800 || data.pressure > 1200 ||
+                data.humidity < 0 || data.humidity > 100 ||
+                data.pH < 0 || data.pH > 14) {
+                console.warn("Data out of range:", data);
+                return;
+            }
+
+            // Update timestamp
+            lastDataTimeRef.current = Date.now();
+
+            // Update well integrity sensors
+            setWellIntegritySensors([
+                {
+                    id: '1',
+                    name: 'Temperature',
+                    type: 'temperature',
+                    value: data.temp,
+                    unit: '°C',
+                    timestamp: new Date(),
+                    status: 'online'
+                },
+                {
+                    id: '2',
+                    name: 'Humidity',
+                    type: 'humidity',
+                    value: data.humidity,
+                    unit: '%',
+                    timestamp: new Date(),
+                    status: 'online'
+                },
+                {
+                    id: '3',
+                    name: 'Air Pressure',
+                    type: 'air_pressure',
+                    value: data.pressure,
+                    unit: 'hPa',
+                    timestamp: new Date(),
+                    status: 'online'
+                },
+                {
+                    id: '4',
+                    name: 'H₂S Gas',
+                    type: 'h2s_gas',
+                    value: data.h2s_ppm,
+                    unit: 'ppm',
+                    timestamp: new Date(),
+                    status: 'online'
+                },
+                {
+                    id: '5',
+                    name: 'CO Gas',
+                    type: 'co_gas',
+                    value: data.co_ppm,
+                    unit: 'ppm',
+                    timestamp: new Date(),
+                    status: 'online'
+                },
+                {
+                    id: '6',
+                    name: 'O₂ Gas',
+                    type: 'o2_gas',
+                    value: data.do_mgL,
+                    unit: '%',
+                    timestamp: new Date(),
+                    status: 'online'
+                }
+            ]);
+
+            // Update water integrity sensors
+            setWaterIntegritySensors([
+                {
+                    id: '7',
+                    name: 'pH Level',
+                    type: 'ph',
+                    value: data.pH,
+                    unit: 'pH',
+                    timestamp: new Date(),
+                    status: 'online'
+                },
+                {
+                    id: '8',
+                    name: 'TDS (Minerals)',
+                    type: 'tds',
+                    value: data.tds,
+                    unit: 'ppm',
+                    timestamp: new Date(),
+                    status: 'online'
+                }
+            ]);
+
+        } catch (error) {
+            console.error("Invalid JSON from Arduino:", jsonString, error);
+        }
+    };
+
+    // Handle Bluetooth data
+    const handleBluetoothData = (event: any) => {
+        const value = new TextDecoder().decode(event.target.value);
+        dataBufferRef.current += value;
+
+        // Process complete JSON lines
+        while (dataBufferRef.current.includes('\n')) {
+            const newlineIndex = dataBufferRef.current.indexOf('\n');
+            const jsonString = dataBufferRef.current.substring(0, newlineIndex).trim();
+            dataBufferRef.current = dataBufferRef.current.substring(newlineIndex + 1);
+
+            if (jsonString) {
+                processArduinoData(jsonString);
+            }
+        }
+    };
+
+    // Handle disconnection
+    const onDisconnected = () => {
+        console.log("Arduino disconnected");
+        setIsConnected(false);
+        toast({
+            title: "Arduino Disconnected",
+            description: "The Arduino device has been disconnected.",
+            variant: "destructive"
+        });
+
+        // Update all sensors to offline with NaN values
+        setWellIntegritySensors(prev => prev.map(s => ({ ...s, value: NaN, status: 'offline' as const })));
+        setWaterIntegritySensors(prev => prev.map(s => ({ ...s, value: NaN, status: 'offline' as const })));
+    };
+
+    // Connect via Bluetooth
+    const connectViaBluetooth = async () => {
+        try {
+            console.log("Requesting Bluetooth device...");
+
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [BLUETOOTH_SERVICE_UUID] }],
+                optionalServices: [BLUETOOTH_SERVICE_UUID]
+            });
+
+            bluetoothDeviceRef.current = device;
+            console.log("Device selected:", device.name);
+
+            const server = await device.gatt!.connect();
+            console.log("Connected to GATT server");
+
+            const service = await server.getPrimaryService(BLUETOOTH_SERVICE_UUID);
+            console.log("Service found");
+
+            const characteristic = await service.getCharacteristic(BLUETOOTH_CHAR_UUID);
+            characteristicRef.current = characteristic;
+            console.log("Characteristic found");
+
+            await characteristic.startNotifications();
+            characteristic.addEventListener('characteristicvaluechanged', handleBluetoothData);
+            console.log("Notifications started - listening for data");
+
+            setIsConnected(true);
+            device.addEventListener('gattserverdisconnected', onDisconnected);
+
+            toast({
+                title: "Arduino Connected",
+                description: "Successfully connected via Bluetooth.",
+            });
+
+        } catch (error: any) {
+            console.error("Bluetooth connection failed:", error);
+            throw error;
+        }
+    };
+
+    // Read USB Serial data
+    const readSerialData = async () => {
+        try {
+            const textDecoder = new TextDecoderStream();
+            const readableStreamClosed = serialPortRef.current.readable.pipeTo(textDecoder.writable);
+            const reader = textDecoder.readable.getReader();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    console.log("Serial reader closed");
+                    break;
+                }
+
+                dataBufferRef.current += value;
+
+                while (dataBufferRef.current.includes('\n')) {
+                    const newlineIndex = dataBufferRef.current.indexOf('\n');
+                    const jsonString = dataBufferRef.current.substring(0, newlineIndex).trim();
+                    dataBufferRef.current = dataBufferRef.current.substring(newlineIndex + 1);
+
+                    if (jsonString) {
+                        processArduinoData(jsonString);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Serial read error:", error);
+            setIsConnected(false);
+        }
+    };
+
+    // Connect via USB Serial
+    const connectViaUSB = async () => {
+        try {
+            console.log("Requesting USB Serial port...");
+
+            const port = await (navigator as any).serial.requestPort();
+            await port.open({ baudRate: 9600 });
+            serialPortRef.current = port;
+            console.log("USB Serial port opened at 9600 baud");
+
+            setIsConnected(true);
+            toast({
+                title: "Arduino Connected",
+                description: "Successfully connected via USB Serial.",
+            });
+
+            readSerialData();
+
+        } catch (error: any) {
+            console.error("USB Serial connection failed:", error);
+            throw error;
+        }
+    };
+
+    // Connect Arduino
+    const connectArduino = async () => {
+        setIsConnecting(true);
+
+        try {
+            // Try Web Bluetooth first
+            if (navigator.bluetooth) {
+                await connectViaBluetooth();
+            }
+            // Fall back to USB Serial
+            else if ((navigator as any).serial) {
+                await connectViaUSB();
+            }
+            // No API available
+            else {
+                throw new Error("No connection method available. Use Chrome or Edge.");
+            }
+
+        } catch (error: any) {
+            console.error("Connection failed:", error);
+            toast({
+                title: "Connection Failed",
+                description: error.message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsConnecting(false);
+        }
+    };
+
+    // Monitor connection status
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (isConnected && (Date.now() - lastDataTimeRef.current > 10000)) {
+                console.warn("Data stale - no updates for 10 seconds");
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isConnected]);
+
+    return (
+        <div className= "min-h-screen bg-gradient-to-br from-ocean-light/10 via-background to-river-light/10" >
+        {/* Header */ }
+        < div className = "border-b border-ocean-light/30 bg-gradient-to-r from-water-deep/95 via-ocean-primary/95 to-water-flow/95 backdrop-blur-sm sticky top-0 z-10 water-ripple shadow-water" >
+            <div className="max-w-7xl mx-auto px-6 py-6" >
+                <div className="flex items-center justify-between" >
+                    <div className="flex items-center gap-4" >
+                        <div className="relative" >
+                            <Droplets className="h-12 w-12 text-ocean-glow drop-shadow-lg animate-pulse" />
+                                <div className="absolute inset-0 h-12 w-12 rounded-full bg-ocean-glow/20 animate-ping" />
+                                    </div>
+                                    < div >
+                                    <h1 className="text-3xl font-bold text-white mb-1 tracking-wide" >
+                                        <span className="bg-gradient-to-r from-ocean-glow to-white bg-clip-text text-transparent" >
+                                            AWRS
+                                            </span>
+                                            </h1>
+                                            < p className = "text-ocean-light/90 text-sm font-medium" >
+                                                Aqua Well Robot Solution
+                                                    </p>
+                                                    < p className = "text-ocean-light/70 text-xs" >
+                                                        Real - time environmental and water quality monitoring
+                                                            </p>
+                                                            </div>
+                                                            </div>
+                                                            < div className = "flex items-center gap-3" >
+                                                                <Badge 
+                variant={ isConnected ? "default" : "destructive" }
+    className = {`flex items-center gap-2 px-4 py-2 cursor-pointer ${isConnecting
+            ? 'bg-orange-500/90 hover:bg-orange-500 text-white border-orange-400'
+            : isConnected
+                ? 'bg-emerald-500/90 hover:bg-emerald-500 text-white border-emerald-400 badge-blink'
+                : 'bg-red-500/90 hover:bg-red-500'
+        } backdrop-blur-sm shadow-lg transition-all`
+}
+onClick = {!isConnected ? connectArduino : undefined}
+              >
+    { isConnected?<Wifi className = "h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+{ isConnecting ? 'Connecting...' : isConnected ? 'Arduino Connected ✓' : 'Connect Arduino' }
+</Badge>
+    </div>
+    </div>
+    </div>
+    </div>
+
+{/* Main Content */ }
+<div className="max-w-7xl mx-auto px-4 py-6 space-y-6" >
+    {/* Section 1: Camera Feed & Water Level */ }
+    < div className = "grid grid-cols-1 lg:grid-cols-1 gap-6" >
+        <CameraFeed waterLevel={ waterLevel } isConnected = { isConnected } />
+            </div>
+
+{/* Section 2: Well Integrity */ }
+<WellIntegritySection sensors={ wellIntegritySensors } />
+
+{/* Section 3: Water Integrity */ }
+<WaterIntegritySection sensors={ waterIntegritySensors } />
+    </div>
+    </div>
+  );
+};
+
+export default Index;

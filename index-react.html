@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWRS - Aqua Well Robot Solution</title>
+
+    <!-- Font integration -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            /* Global reset to stop scrollbars */
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --glass-bg: rgba(25, 25, 27, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+
+            /* Ocean Theme */
+            --ocean-primary: 198, 87%, 45%;
+            --ocean-secondary: 191, 100%, 55%;
+            --ocean-light: 191, 76%, 90%;
+            --ocean-dark: 198, 87%, 20%;
+            --ocean-glow: 191, 100%, 75%;
+
+            /* River Theme */
+            --river-primary: 178, 85%, 38%;
+            --river-secondary: 172, 85%, 55%;
+            --river-light: 172, 45%, 92%;
+            --river-dark: 178, 85%, 18%;
+
+            /* Forest Theme */
+            --forest-primary: 162, 68%, 38%;
+            --forest-secondary: 155, 68%, 55%;
+            --forest-light: 155, 35%, 92%;
+            --forest-dark: 162, 68%, 18%;
+
+            /* Water Theme */
+            --water-flow: 185, 95%, 60%;
+            --water-deep: 220, 95%, 25%;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* LENIS */
+        html.lenis,
+        html.lenis body {
+            height: auto;
+        }
+
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+
+        .lenis.lenis-smooth [data-lenis-prevent] {
+            overscroll-behavior: contain;
+        }
+
+        .lenis.lenis-stopped {
+            overflow: hidden;
+        }
+
+        .lenis.lenis-smooth iframe {
+            pointer-events: none;
+        }
+
+        /* GLOBAL NAV */
+        nav {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: max-content;
+            min-width: 600px;
+            height: 56px;
+            background: rgba(15, 15, 20, 0.45);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 32px;
+            gap: 40px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .nav-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-logo-img {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1), text-shadow 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+        }
+
+        /* CANVAS CONTAINER */
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            /* Canvas renders BEHIND hero text */
+            pointer-events: none;
+        }
+
+        /* SECTION 1: HERO */
+        .hero {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            overflow: hidden;
+            z-index: 5;
+            /* Hero text renders ABOVE canvas */
+        }
+
+        .hero-content {
+            position: absolute;
+            top: 12vh;
+            /* Higher up to leave more space for the robot below */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            padding: 0 20px;
+            pointer-events: none;
+            /* Let clicks pass through to potential 3D */
+        }
+
+        .hero-title {
+            font-size: clamp(1.5rem, 3vw, 2.8rem);
+            font-weight: 500;
+            letter-spacing: -0.015em;
+            color: #f5f5f7;
+            margin-bottom: -15px;
+            /* Tighter leading like Apple */
+            will-change: transform, opacity;
+            text-align: center;
+        }
+
+        /* SECTION 2: BENTO GRID */
+        .features-section {
+            position: relative;
+            padding: 180px max(40px, 4vw);
+            max-width: 1600px;
+            margin: 0 auto;
+            z-index: 10;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 100px;
+        }
+
+        .section-title {
+            font-size: clamp(3rem, 6vw, 4.5rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+
+        /* SECTION 3: METHODOLOGY GRID */
+        .technical-section {
+            padding: 100px 40px;
+            background: #000;
+            position: relative;
+            z-index: 10;
+        }
+
+        .sticky-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .tech-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border-radius: 28px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 20px 40px rgba(0, 0, 0, 0.4);
+            padding: 48px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.5s ease;
+            position: relative;
+            overflow: hidden;
+            will-change: transform, opacity;
+        }
+
+        /* Subtle inner gradient hint */
+        .tech-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .tech-panel:hover {
+            transform: translateY(-12px);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15), 0 40px 80px rgba(0, 0, 0, 0.8);
+        }
+
+        .tech-panel:hover::before {
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .sticky-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sticky-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Text Styling inside Cards */
+        .tech-panel h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #ffffff 0%, #a1a1a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Divider line */
+        .tech-panel h3::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            transition: width 0.4s ease, background 0.4s ease;
+        }
+
+        .tech-panel:hover h3::after {
+            width: 80px;
+            background: rgba(96, 165, 250, 0.5);
+            /* subtle blue */
+        }
+
+        .tech-panel p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.6;
+            font-weight: 400;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* CLOSER LOOK INTERACTIVE SECTION */
+        .closer-look {
+            position: relative;
+            width: 100vw;
+            min-height: 120vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 80px 40px;
+            box-sizing: border-box;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .closer-look-container {
+            position: relative;
+            width: 90%;
+            max-width: 1400px;
+            height: 80vh;
+            min-height: 600px;
+            background: rgba(10, 10, 15, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            /* Brightened the background with a subtle inner glow */
+            box-shadow: inset 0 0 100px rgba(59, 130, 246, 0.03), 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            /* Layout transition properties */
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* 3D Canvas wrapper to handle the layout shift */
+        .cl-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* When dashboard is active, shrink 3D area to 35% */
+        .closer-look-container.dashboard-active .cl-canvas-wrapper {
+            width: 35%;
+        }
+
+        #cl-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .cl-spec-menu {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .cl-spec-btn {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f5f5f7;
+            padding: 16px 20px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 240px;
+            text-align: left;
+        }
+
+        .cl-spec-btn .cl-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .cl-spec-btn .cl-label {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .cl-spec-btn .cl-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 400;
+        }
+
+        .cl-spec-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+
+        .cl-spec-btn:hover .cl-icon {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .cl-spec-btn.active {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.12);
+        }
+
+        .cl-spec-btn.active .cl-icon {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .cl-info-panel {
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%) translateX(30px);
+            width: 380px;
+            /* Widened to fill new space */
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 5;
+        }
+
+        .cl-info-panel.visible {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+            pointer-events: auto;
+        }
+
+        .cl-info-panel h3 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #bfdbfe 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cl-info-panel p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 24px;
+        }
+
+        .cl-spec-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 16px;
+        }
+
+        .cl-spec-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 5px 10px;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #93c5fd;
+        }
+
+        .cl-spec-tag::before {
+            content: '✦';
+            font-size: 7px;
+            opacity: 0.6;
+        }
+
+        .cl-back-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f5f5f7;
+            padding: 9px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .cl-back-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .cl-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.02em;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .closer-look-container.dashboard-active .cl-hint {
+            opacity: 0;
+        }
+
+        /* DASHBOARD TOGGLE BUTTON */
+        .dashboard-toggle-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(15, 15, 20, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-toggle-btn:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+        }
+
+        /* DASHBOARD PANEL */
+        .dashboard-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 65%;
+            height: 100%;
+            background: linear-gradient(135deg, hsla(var(--ocean-dark), 0.6), hsla(var(--background), 0.95), hsla(var(--water-deep), 0.6));
+            backdrop-filter: blur(40px);
+            border-left: 1px solid hsla(var(--ocean-light), 0.2);
+            box-shadow: -15px 0 50px hsla(var(--ocean-primary), 0.15);
+            padding: 30px 40px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        .closer-look-container.dashboard-active .dashboard-panel {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Dashboard Scaffolding */
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-header h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+
+        .dash-card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .dash-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dash-card-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .dash-card-title-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-online {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            animation: badge-blink 2s infinite ease-in-out;
+        }
+
+        .status-stale {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        @keyframes badge-blink {
+            0% {
+                opacity: 0.7;
+            }
+
+            50% {
+                opacity: 1;
+                box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        .dash-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .dash-card-unit {
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .dash-gas-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .dash-gas-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dash-gas-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .dash-gas-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .dash-gas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .dash-gas-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .dash-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .dash-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 3px;
+            width: 0%;
+            /* Set via inline style or JS */
+            transition: width 1s ease;
+        }
+
+        .dash-section-wrapper {
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .theme-forest.dash-section-wrapper {
+            background: linear-gradient(135deg, hsla(var(--forest-light), 0.05), hsla(var(--forest-dark), 0.15));
+            border: 1px solid hsla(var(--forest-light), 0.2);
+        }
+
+        .theme-water.dash-section-wrapper {
+            background: linear-gradient(135deg, hsla(var(--ocean-light), 0.05), hsla(var(--ocean-dark), 0.15));
+            border: 1px solid hsla(var(--ocean-light), 0.2);
+        }
+
+        .dash-section-wrapper {
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .theme-forest.dash-section-wrapper {
+            background: linear-gradient(135deg, hsla(var(--forest-light), 0.05), hsla(var(--forest-dark), 0.15));
+            border: 1px solid hsla(var(--forest-light), 0.2);
+        }
+
+        .theme-water.dash-section-wrapper {
+            background: linear-gradient(135deg, hsla(var(--ocean-light), 0.05), hsla(var(--ocean-dark), 0.15));
+            border: 1px solid hsla(var(--ocean-light), 0.2);
+        }
+
+        /* Dashboard Themes (Forest / Water) */
+        .theme-forest .dashboard-header svg {
+            stroke: hsl(var(--forest-primary));
+        }
+
+        .theme-forest .dashboard-header h3 {
+            color: hsl(var(--forest-primary));
+        }
+
+        .theme-forest .dash-card {
+            background: hsla(var(--forest-light), 0.05);
+            border: 1px solid hsla(var(--forest-light), 0.2);
+        }
+
+        .theme-forest .dash-card-value {
+            color: hsl(var(--forest-primary));
+        }
+
+        .theme-forest .dash-gas-section {
+            background: hsla(var(--forest-dark), 0.3);
+            border: 1px solid hsla(var(--forest-light), 0.2);
+        }
+
+        .theme-forest .dash-gas-title {
+            color: hsl(var(--forest-primary));
+        }
+
+        .theme-forest .dash-bar-bg {
+            background: hsla(var(--forest-light), 0.15);
+        }
+
+        .theme-forest .dash-bar-fill {
+            background: linear-gradient(90deg, hsl(var(--forest-primary)), hsl(var(--forest-secondary)));
+        }
+
+        .theme-water .dashboard-header svg {
+            stroke: hsl(var(--ocean-primary));
+        }
+
+        .theme-water .dashboard-header h3 {
+            color: hsl(var(--ocean-primary));
+        }
+
+        .theme-water .dash-card {
+            background: hsla(var(--ocean-light), 0.05);
+            border: 1px solid hsla(var(--ocean-light), 0.2);
+        }
+
+        .theme-water .dash-card-value {
+            color: hsl(var(--ocean-primary));
+        }
+
+        .theme-water .dash-gas-section {
+            background: hsla(var(--ocean-dark), 0.3);
+            border: 1px solid hsla(var(--ocean-light), 0.2);
+        }
+
+        .theme-water .dash-gas-title {
+            color: hsl(var(--ocean-primary));
+        }
+
+        @media (max-width: 900px) {
+            .cl-spec-menu {
+                position: absolute;
+                left: 10px;
+                right: 10px;
+                top: auto;
+                bottom: 50px;
+                transform: none;
+                flex-direction: row;
+                overflow-x: auto;
+                gap: 6px;
+                padding: 8px 4px;
+                scrollbar-width: none;
+            }
+
+            .cl-spec-menu::-webkit-scrollbar {
+                display: none;
+            }
+
+            .cl-spec-btn {
+                min-width: 140px;
+                padding: 10px 12px;
+                font-size: 11px;
+                flex-shrink: 0;
+            }
+
+            .cl-spec-btn .cl-sub {
+                display: none;
+            }
+
+            .cl-info-panel {
+                position: absolute;
+                top: auto;
+                bottom: 6px;
+                left: 10px;
+                right: 10px;
+                width: calc(100% - 20px);
+                transform: translateY(100%);
+                max-height: 55vh;
+                padding: 18px;
+            }
+
+            .cl-info-panel.visible {
+                transform: translateY(0);
+            }
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 80px 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .footer-logo {
+            height: 48px;
+            width: auto;
+            opacity: 0.8;
+            filter: grayscale(100%) brightness(200%);
+            transition: all 0.3s ease;
+        }
+
+        .footer-logo:hover {
+            opacity: 1;
+            filter: grayscale(0%) brightness(100%);
+        }
+
+        footer p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 0.02em;
+        }
+    </style>
+
+    <!-- ES MOD MAP -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+
+    <!-- GLOBAL NAV -->
+    <nav>
+        <a href="#" class="nav-logo-container">
+            <img src="image.png" alt="AWRS Logo" class="nav-logo-img">
+            <div class="nav-logo">AWRS</div>
+        </a>
+        <div class="nav-links">
+            <a href="#overview">Overview</a>
+            <a href="#closer-look">3D Showcase</a>
+            <a href="#tech">Methodology</a>
+            <a href="#investors">Investors</a>
+            <a href="#contributions">Contributions</a>
+        </div>
+    </nav>
+
+    <!-- WEBGL BACKGROUND -->
+    <div id="webgl-container"></div>
+
+    <!-- SECTION 1: HERO -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h2 class="hero-title">Aqua Well</h2>
+        </div>
+    </section>
+
+
+
+    <!-- SECTION 2.5: TAKE A CLOSER LOOK -->
+    <section class="closer-look" id="closer-look">
+        <h2>Take a closer look.</h2>
+        <div class="closer-look-container" id="cl-container">
+            <button class="dashboard-toggle-btn" id="dash-btn">
+                <span>View Dashboard</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+                </svg>
+            </button>
+
+            <div class="cl-canvas-wrapper">
+                <canvas id="cl-canvas"></canvas>
+                <div class="cl-spec-menu">
+                    <button class="cl-spec-btn" data-part="Part7">
+                        <span class="cl-icon">⚙</span>
+                        <span class="cl-label">
+                            <span>Lower Motor Assembly</span>
+                            <span class="cl-sub">Stabilization Base</span>
+                        </span>
+                    </button>
+                    <button class="cl-spec-btn" data-part="Part1">
+                        <span class="cl-icon">🔬</span>
+                        <span class="cl-label">
+                            <span>Analytical Core</span>
+                            <span class="cl-sub">XRF & Camera System</span>
+                        </span>
+                    </button>
+                    <button class="cl-spec-btn" data-part="Part8">
+                        <span class="cl-icon">🔧</span>
+                        <span class="cl-label">
+                            <span>Upper Motor & Wheels</span>
+                            <span class="cl-sub">Locomotion System</span>
+                        </span>
+                    </button>
+                    <button class="cl-spec-btn" data-part="Part2">
+                        <span class="cl-icon">🧪</span>
+                        <span class="cl-label">
+                            <span>Sampling Tubes</span>
+                            <span class="cl-sub">Dual-Tube Collector</span>
+                        </span>
+                    </button>
+                </div>
+                <div class="cl-info-panel" id="cl-info-panel">
+                    <h3 id="cl-part-title">Component</h3>
+                    <div id="cl-part-content">
+                        <p>Description loading…</p>
+                    </div>
+                    <div class="cl-spec-tags" id="cl-part-specs"></div>
+                    <button class="cl-back-btn" id="cl-back-btn">
+                        <span>←</span> Back to Overview
+                    </button>
+                </div>
+                <div class="cl-hint">Drag to rotate · Scroll to zoom · Click a component to inspect</div>
+            </div>
+
+            <!-- DASHBOARD PANEL -->
+            <div class="dashboard-panel">
+                <!-- React micro-frontend mount target. When the bundle is loaded, it should render here. -->
+                <div id="react-dashboard-root" style="display:none;"></div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECTION 3: TECH DEEP DIVE -->
+    <section class="technical-section" id="tech">
+        <div class="section-header" style="margin-bottom: 60px;">
+            <h2 class="section-title">Advanced Methodology.</h2>
+        </div>
+        <div class="sticky-container">
+            <div class="tech-panel tech-reveal">
+                <h3>Autonomous Navigation</h3>
+                <p>Mounted on a guided steel cable with a motorized hydraulic lift, AWRS navigates vertical well paths
+                    and pauses at predefined depth markers to isolate surface-accumulated contaminants.</p>
+            </div>
+            <div class="tech-panel tech-reveal">
+                <h3>X-Ray Fluorescence (XRF)</h3>
+                <p>The rotating analytical module points an XRF laser beam against metal casings to check integrity,
+                    paired with high-definition cameras for ML-based crack and corrosion detection.</p>
+            </div>
+            <div class="tech-panel tech-reveal">
+                <h3>Environmental Endurance</h3>
+                <p>Built with corrosion-resistant stainless steel. Rigorously lab-tested to withstand up to 60°C and
+                    100% humidity environments without sensor drift or signal degradation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <img src="image.png" alt="AWRS Logo" class="footer-logo">
+        <p>&copy; 2026 AWRS Technologies. All rights reserved.</p>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <!-- External Depedencies: GSAP & Lenis via standard script tags to optimize initialization -->
+    <script src="https://unpkg.com/lenis@1.1.14/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // 1. LENIS - MOMENTUM SCROLL
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Connect Lenis with GSAP ScrollTrigger
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => {
+            lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0);
+
+        // 2. THREE.JS - WEBGL EXCELLENCE
+        const container = document.getElementById('webgl-container');
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+        // Move camera out a bit so robot fits well
+        camera.position.set(0, 0, 700);
+
+        // Renderer matching Apple config
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(width, height);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 3.5; // Significantly increased exposure for high brightness
+        container.appendChild(renderer.domElement);
+
+        // Cinematic HDR Lighting setup
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+        const envMap = pmremGenerator.fromScene(new RoomEnvironment()).texture;
+        scene.environment = envMap;
+
+        // Post-Processing for specular bloom
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.25, 0.6, 0.85);
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        const robot = new THREE.Group();
+        scene.add(robot);
+
+        // Materials logic reflecting precise awrs-showcase.html colors
+        const pbrBase = {
+            metalness: 0.6,
+            roughness: 0.32,
+            clearcoat: 0.25,
+            clearcoatRoughness: 0.3,
+            envMapIntensity: 2.2 // Boosted for RoomEnvironment
+        };
+
+        const materials = {
+            mainBody: new THREE.MeshPhysicalMaterial({
+                ...pbrBase,
+                color: 0x2558c4
+            }),
+            motorHousing: new THREE.MeshPhysicalMaterial({
+                ...pbrBase,
+                color: 0x1e4cb5,
+                metalness: 0.65,
+                roughness: 0.28
+            }),
+            rubber: new THREE.MeshPhysicalMaterial({
+                color: 0x354868,
+                metalness: 0.55,
+                roughness: 0.4,
+                clearcoat: 0.2,
+                envMapIntensity: 2.8
+            }),
+            chrome: new THREE.MeshPhysicalMaterial({
+                color: 0x7a8da8,
+                metalness: 0.65,
+                roughness: 0.2,
+                clearcoat: 0.4,
+                clearcoatRoughness: 0.15,
+                envMapIntensity: 3.0
+            })
+        };
+
+        function getSTLUrl(fileName) {
+            if (window.location.protocol === 'blob:') {
+                return window.location.origin + '/' + fileName;
+            }
+            return fileName;
+        }
+
+        const loader = new STLLoader();
+        const stlFiles = ['Part1.stl', 'Part2.stl', 'Part4.stl', 'Part7.stl', 'Part8.stl'];
+
+        let loadedCount = 0;
+
+        stlFiles.forEach((file) => {
+            loader.load(
+                getSTLUrl(file),
+                (geometry) => {
+                    const key = file.replace('.stl', '');
+
+                    // Align rotation based on original showcase logic
+                    if (key !== 'Part2') geometry.rotateX(-Math.PI / 2);
+                    if (key === 'Part7') geometry.rotateX(Math.PI);
+                    if (key === 'Part4') geometry.rotateY(Math.PI);
+
+                    // Center geometry bounds for local positioning
+                    geometry.computeBoundingBox();
+                    const box = geometry.boundingBox;
+                    geometry.translate(
+                        -(box.min.x + box.max.x) / 2,
+                        -(box.min.y + box.max.y) / 2,
+                        -(box.min.z + box.max.z) / 2
+                    );
+                    geometry.computeVertexNormals();
+
+                    // Heuristic material assignment from showcase
+                    // Part1 & Part4 = mainBody (both are cage halves)
+                    // Part8 = motorHousing, Part7 = rubber, Part2 = chrome
+                    let mat = materials.mainBody;
+                    if (key === 'Part8') mat = materials.motorHousing;
+                    else if (key === 'Part7') mat = materials.rubber;
+                    else if (key === 'Part2') mat = materials.chrome;
+                    // Part1 and Part4 both use mainBody (cage structure)
+
+                    const mesh = new THREE.Mesh(geometry, mat);
+
+                    // Apply precise vertical stacking and depth adjustments from showcase
+                    const baseAnchor = -200;
+                    const yCage = baseAnchor + 41.2 + 149;
+                    const yTop = yCage + 149 + 41.6;
+
+                    if (key === 'Part7') mesh.position.y = baseAnchor;
+                    else if (key === 'Part8') mesh.position.y = yTop;
+                    else mesh.position.y = yCage;
+
+                    // Depth offsets for the cage pieces
+                    if (key === 'Part1') mesh.position.z = 38.71;
+                    if (key === 'Part4') mesh.position.z = -38.71;
+
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    robot.add(mesh);
+                    loadedCount++;
+
+                    if (loadedCount === stlFiles.length) {
+                        // ─── Glass fill for cage windows (exact match from showcase) ───
+                        const baseAnchorGlass = -200;
+                        const yCageGlass = baseAnchorGlass + 41.2 + 149;
+                        const halfH = 130;
+                        const barrelPoints = [];
+                        const segments = 24;
+                        for (let i = 0; i <= segments; i++) {
+                            const t = i / segments;
+                            const y = -halfH + t * halfH * 2;
+                            const curve = 1 - Math.pow((t - 0.5) * 2, 2);
+                            const r = 56 + curve * 12;
+                            barrelPoints.push(new THREE.Vector2(r, y));
+                        }
+                        const glassGeo = new THREE.LatheGeometry(barrelPoints, 32);
+                        const glassMat = new THREE.MeshPhysicalMaterial({
+                            color: 0x010103,
+                            metalness: 0.05,
+                            roughness: 0.8,
+                            transparent: false,
+                            opacity: 1.0,
+                            clearcoat: 0.2,
+                            clearcoatRoughness: 0.3,
+                            side: THREE.DoubleSide
+                        });
+                        const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+                        glassMesh.position.y = yCageGlass;
+                        glassMesh.renderOrder = -1; // render behind cage bars
+                        robot.add(glassMesh);
+
+                        // Re-center full group accurately by shifting children
+                        const groupBounds = new THREE.Box3().setFromObject(robot);
+                        const center = groupBounds.getCenter(new THREE.Vector3());
+                        robot.children.forEach(child => {
+                            child.position.sub(center);
+                        });
+                    }
+                },
+                undefined,
+                (error) => {
+                    console.warn('Could not load STL: ', file, error);
+                }
+            );
+        });
+
+        // Initial setup: model starts UPRIGHT for the startup animation
+        robot.rotation.x = 0;
+        robot.rotation.y = 0;
+        robot.rotation.z = 0;
+        robot.scale.set(1.45, 1.45, 1.45);
+        robot.position.set(0, -130, 0);
+
+        // 3. GSAP SCROLL PHYSICS & ACCUEIL ANIMATION
+
+        // Start blacked out for the "lighting up" reveal
+        renderer.toneMappingExposure = 0;
+
+        // Hero Text Fade & Cinematic Light Reveal
+        const introTl = gsap.timeline();
+
+        introTl.to(renderer, {
+            toneMappingExposure: 3.5, // Fade the lighting in to high brightness
+            duration: 3.5,
+            ease: "power2.inOut",
+            delay: 0.5 // Wait a beat before lighting up
+        }, 0);
+
+        introTl.from(".hero-title", {
+            y: 20, /* Reduced travel distance */
+            opacity: 0,
+            duration: 1.5,
+            ease: "power3.out",
+            delay: 0.1
+        }, 0);
+
+        // Startup animation: tilt the model from upright into its resting pose
+        introTl.to(robot.rotation, {
+            x: -0.35,
+            y: -0.10,
+            z: 0.03,
+            duration: 2.5,
+            ease: "power2.out",
+            delay: 0.8
+        }, 0);
+
+        // Hide the 3D model when scrolling past the hero section
+        gsap.to('#webgl-container', {
+            opacity: 0,
+            ease: 'none',
+            scrollTrigger: {
+                trigger: '.hero',
+                start: 'bottom 80%',
+                end: 'bottom 20%',
+                scrub: true
+            }
+        });
+
+        // Parallax hero text out
+        gsap.to(".hero-content", {
+            y: -200,
+            opacity: 0,
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".hero",
+                start: "top top",
+                end: "bottom top",
+                scrub: true
+            }
+        });
+
+        // Robot stands completely still after intro — no scroll-linked transforms
+
+        // Reveal the newly designed methodology cards
+        gsap.utils.toArray('.tech-reveal').forEach((panel, i) => {
+            gsap.fromTo(panel,
+                { y: 40, opacity: 0 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.8,
+                    ease: "power2.out",
+                    scrollTrigger: {
+                        trigger: panel,
+                        start: "top 85%", // trigger when top of card hits 85% of viewport height
+                        toggleActions: "play none none reverse"
+                    },
+                    delay: i * 0.15 // staggered cascade
+                }
+            );
+        });
+
+        // 4. PERFORMANCE & RENDER LOOP
+        const clock = new THREE.Clock();
+
+        // Intersection observer to pause rendering when canvas completely out of viewport
+        // (technically fixed over 100vh, so it shouldn't leave, but this honors the prompt's safeguard)
+        let renderRequested = true;
+        const bodyObserver = new IntersectionObserver((entries) => {
+            renderRequested = entries[0].isIntersecting;
+        }, { threshold: 0 });
+        bodyObserver.observe(document.body);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (renderRequested) {
+                // No continuous animation — robot stands still
+                // Just render the scene
+                composer.render();
+            }
+        }
+        animate();
+
+        // Resize handling
+        window.addEventListener('resize', () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            composer.setSize(width, height);
+        });
+    </script>
+
+    <!-- CLOSER LOOK INTERACTIVE 3D VIEWER -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ─── Part Information ───
+        const clPartInfo = {
+            'Part7': {
+                title: 'Lower Motor Assembly',
+                description: 'The foundation of the AWRS featuring hydraulic stabilization wheels. Navigates the well using a motorized lifting mechanism on a guided steel cable, pausing at precise depth intervals.',
+                specs: ['Hydraulic Stabilization', '222mm Form Factor', 'Precision Positioning', 'Motorized Cable Lift']
+            },
+            'Part1': {
+                title: 'Analytical Core',
+                description: 'The central intelligence unit containing XRF sensors for metal integrity, high-definition cameras for 360° inspection, and an advanced sensing array for real-time diagnostics.',
+                specs: ['pH, EC, TDS, TSS', 'Gas: H2S, CO2, CH4, SO2', 'EIS AI Model (96%)', 'Live Remote Telemetry']
+            },
+            'Part8': {
+                title: 'Suspension System',
+                description: 'The upper support mechanism built with a corrosion-resistant stainless-steel chassis capable of enduring harsh hydrogeological conditions, up to 60°C and 100% humidity.',
+                specs: ['Grade-5 Durability', 'Water-proof Enclosures', 'High Load Capacity', 'Corrosion Resistant']
+            },
+            'Part2': {
+                title: 'Sampling Mechanism',
+                description: 'A custom hydraulically actuated module that simultaneously extracts discrete, uncorrupted fluid samples from multiple strata without cross-contamination.',
+                specs: ['500ml Surface Sampler', '1L Deep-Water System', 'Auto-Sealing Valves', 'Internal Storage Chambers']
+            }
+        };
+
+        let clInitialized = false;
+
+        function initCloserLook() {
+            if (clInitialized) return;
+            clInitialized = true;
+
+            const canvas = document.getElementById('cl-canvas');
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+
+            // ─── Scene ───
+            const clScene = new THREE.Scene();
+            clScene.background = new THREE.Color(0x0a0a0e);
+
+            const clCamera = new THREE.PerspectiveCamera(40, rect.width / rect.height, 1, 5000);
+            clCamera.position.set(350, 80, 350);
+
+            const clRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            clRenderer.setSize(rect.width, rect.height);
+            clRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            clRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+            clRenderer.toneMappingExposure = 2.5; // High exposure for brighter model
+            clRenderer.outputEncoding = THREE.sRGBEncoding;
+
+            // ─── Controls ───
+            const clControls = new OrbitControls(clCamera, canvas);
+            clControls.enableDamping = true;
+            clControls.dampingFactor = 0.06;
+            clControls.minDistance = 100;
+            clControls.maxDistance = 700;
+            clControls.enablePan = false;
+            clControls.autoRotate = true;
+            clControls.autoRotateSpeed = 0.8;
+
+            // ─── Lighting ───
+            clScene.add(new THREE.AmbientLight(0xffffff, 1.5));
+
+            const clKey = new THREE.DirectionalLight(0xfff5e6, 6.0);
+            clKey.position.set(150, 300, 200);
+            clScene.add(clKey);
+
+            const clBack = new THREE.DirectionalLight(0x93c5fd, 4.0);
+            clBack.position.set(-200, 100, -200);
+            clScene.add(clBack);
+
+            const clUp = new THREE.PointLight(0x2563eb, 2.5, 800);
+            clUp.position.set(0, -150, 0);
+            clScene.add(clUp);
+
+            // ─── Environment Map ───
+            const pmrem = new THREE.PMREMGenerator(clRenderer);
+            pmrem.compileEquirectangularShader();
+            const envScene = new THREE.Scene();
+            envScene.background = new THREE.Color(0x1a1a1a);
+            const envGeo = new THREE.PlaneGeometry(100, 100);
+            const top = new THREE.Mesh(envGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffffff).multiplyScalar(2.0) }));
+            top.position.set(0, 100, 0); top.rotation.x = Math.PI / 2;
+            envScene.add(top);
+            const side = new THREE.Mesh(envGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(0x93c5fd).multiplyScalar(1.0) }));
+            side.position.set(-100, 20, -50); side.lookAt(0, 0, 0);
+            envScene.add(side);
+            clScene.environment = pmrem.fromScene(envScene).texture;
+
+            // ─── Materials ───
+            const pbrBase = { metalness: 0.6, roughness: 0.32, clearcoat: 0.25, clearcoatRoughness: 0.3, envMapIntensity: 1.4 };
+            const clMats = {
+                mainBody: new THREE.MeshPhysicalMaterial({ ...pbrBase, color: 0x1845a8 }),
+                motorHousing: new THREE.MeshPhysicalMaterial({ ...pbrBase, color: 0x143898, metalness: 0.65, roughness: 0.28 }),
+                rubber: new THREE.MeshPhysicalMaterial({ color: 0x161f30, metalness: 0.25, roughness: 0.75, clearcoat: 0.05, envMapIntensity: 1.0 }),
+                chrome: new THREE.MeshPhysicalMaterial({ color: 0x7a8da8, metalness: 0.65, roughness: 0.2, clearcoat: 0.4, envMapIntensity: 2.0 })
+            };
+
+            function getMat(f) {
+                if (f.includes('Part8')) return clMats.motorHousing;
+                if (f.includes('Part1') || f.includes('Part4')) return clMats.mainBody;
+                if (f.includes('Part7')) return clMats.rubber;
+                if (f.includes('Part2')) return clMats.chrome;
+                return clMats.mainBody;
+            }
+
+            // ─── Load STL Parts ───
+            const clLoader = new STLLoader();
+            const clParts = {};
+            const clGroup = new THREE.Group();
+            clScene.add(clGroup);
+            const files = ['Part1.stl', 'Part2.stl', 'Part4.stl', 'Part7.stl', 'Part8.stl'];
+            let loaded = 0;
+
+            files.forEach(file => {
+                clLoader.load(file, (geo) => {
+                    const mat = getMat(file).clone();
+                    const mesh = new THREE.Mesh(geo, mat);
+                    const key = file.replace('.stl', '');
+
+                    // Rotation to stand upright
+                    if (key !== 'Part2') geo.rotateX(-Math.PI / 2);
+                    if (key === 'Part7') geo.rotateX(Math.PI);
+                    if (key === 'Part4') geo.rotateY(Math.PI);
+
+                    // Center geometry
+                    geo.computeBoundingBox();
+                    const box = geo.boundingBox;
+                    geo.translate(
+                        -(box.min.x + box.max.x) / 2,
+                        -(box.min.y + box.max.y) / 2,
+                        -(box.min.z + box.max.z) / 2
+                    );
+
+                    clParts[key] = mesh;
+
+                    // Stacking positions (bottom up)
+                    const base = -200;
+                    const yBottom = base;
+                    const yCage = yBottom + 41.2 + 149;
+                    const yTop = yCage + 149 + 41.6;
+                    const posMap = { 'Part7': yBottom, 'Part1': yCage, 'Part4': yCage, 'Part8': yTop, 'Part2': yCage };
+                    mesh.position.y = posMap[key] || 0;
+                    if (key === 'Part1') mesh.position.z = 38.71;
+                    if (key === 'Part4') mesh.position.z = -38.71;
+
+                    clGroup.add(mesh);
+                    loaded++;
+
+                    if (loaded === files.length) {
+                        // Add glass fill for cage windows
+                        const yCageGlass = base + 41.2 + 149;
+                        const halfH = 130;
+                        const pts = [];
+                        for (let i = 0; i <= 24; i++) {
+                            const t = i / 24;
+                            const y = -halfH + t * halfH * 2;
+                            const curve = 1 - Math.pow((t - 0.5) * 2, 2);
+                            pts.push(new THREE.Vector2(56 + curve * 12, y));
+                        }
+                        const glassGeo = new THREE.LatheGeometry(pts, 32);
+                        const glassMat = new THREE.MeshPhysicalMaterial({
+                            color: 0x010103, metalness: 0.05, roughness: 0.8,
+                            clearcoat: 0.2, side: THREE.DoubleSide
+                        });
+                        const glass = new THREE.Mesh(glassGeo, glassMat);
+                        glass.position.y = yCageGlass;
+                        glass.renderOrder = -1;
+                        clGroup.add(glass);
+
+                        // Auto-center
+                        const bbox = new THREE.Box3().setFromObject(clGroup);
+                        const center = bbox.getCenter(new THREE.Vector3());
+                        const size = bbox.getSize(new THREE.Vector3());
+                        const fitDist = Math.max(size.x, size.y, size.z) * 1.8;
+                        clControls.target.copy(center);
+                        clCamera.position.set(center.x + fitDist * 0.55, center.y + fitDist * 0.1, center.z + fitDist * 0.55);
+                        clControls.update();
+                    }
+                });
+            });
+
+            // ─── Animation Loop ───
+            function clAnimate() {
+                requestAnimationFrame(clAnimate);
+                clControls.update();
+                clRenderer.render(clScene, clCamera);
+            }
+            clAnimate();
+
+            // ─── UI: Spec Buttons ───
+            document.querySelectorAll('.cl-spec-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    clFocus(btn.dataset.part, btn);
+                });
+            });
+
+            function clFocus(partName, btnEl) {
+                clControls.autoRotate = false;
+                document.querySelectorAll('.cl-spec-btn').forEach(b => b.classList.remove('active'));
+                if (btnEl) btnEl.classList.add('active');
+
+                const info = clPartInfo[partName];
+                if (info) {
+                    document.getElementById('cl-part-title').textContent = info.title;
+                    document.getElementById('cl-part-content').innerHTML = `<p>${info.description}</p>`;
+                    document.getElementById('cl-part-specs').innerHTML = info.specs.map(s => `<span class="cl-spec-tag">${s}</span>`).join('');
+                    document.getElementById('cl-info-panel').classList.add('visible');
+                }
+
+                // Emissive glow has been removed
+            }
+
+            function clReset() {
+                clControls.autoRotate = true;
+                document.querySelectorAll('.cl-spec-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('cl-info-panel').classList.remove('visible');
+            }
+
+            document.getElementById('cl-back-btn').addEventListener('click', clReset);
+
+            // ─── Raycasting (click on 3D parts) ───
+            const clRay = new THREE.Raycaster();
+            const clMouse = new THREE.Vector2();
+            canvas.addEventListener('click', (e) => {
+                const r = canvas.getBoundingClientRect();
+                clMouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+                clMouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+                clRay.setFromCamera(clMouse, clCamera);
+                const hits = clRay.intersectObjects(clGroup.children);
+                if (hits.length > 0) {
+                    const hit = hits[0].object;
+                    const partName = Object.keys(clParts).find(k => clParts[k] === hit);
+                    if (partName && clPartInfo[partName]) {
+                        const btn = document.querySelector(`.cl-spec-btn[data-part="${partName}"]`);
+                        clFocus(partName, btn);
+                    }
+                }
+            });
+
+            // ─── Resize ───
+            const ro = new ResizeObserver(() => {
+                const r = container.getBoundingClientRect();
+                clCamera.aspect = r.width / r.height;
+                clCamera.updateProjectionMatrix();
+                clRenderer.setSize(r.width, r.height);
+            });
+            ro.observe(container);
+
+            // ─── Dashboard Data Bindings ───
+            const dashboardMetricConfig = {
+                temp: { decimals: 1, max: 100 },
+                humidity: { decimals: 1, max: 100 },
+                pressure: { decimals: 0, max: 1200 },
+                ph: { decimals: 1, max: 14 },
+                tds: { decimals: 0, max: 1000 },
+                h2s: { decimals: 2, max: 5 },
+                co: { decimals: 1, max: 50 },
+                o2: { decimals: 1, max: 25 },
+                waterLevel: { decimals: 1, max: 15 }
+            };
+
+            const dashboardState = {
+                connected: true,
+                lastUpdated: Date.now(),
+                metrics: {
+                    temp: 24.5,
+                    humidity: 68.2,
+                    pressure: 1012,
+                    ph: 7.8,
+                    tds: 342,
+                    h2s: 0.5,
+                    co: 2.1,
+                    o2: 20.9,
+                    waterLevel: 3.2
+                }
+            };
+
+            const valueBindings = {};
+            const statusBindings = {};
+            const barBindings = {};
+
+            Object.keys(dashboardMetricConfig).forEach((key) => {
+                valueBindings[key] = Array.from(document.querySelectorAll(`[data-sensor-value="${key}"]`));
+                statusBindings[key] = Array.from(document.querySelectorAll(`[data-sensor-status="${key}"]`));
+                barBindings[key] = Array.from(document.querySelectorAll(`[data-sensor-bar="${key}"]`));
+            });
+
+            const rawKeyMap = {
+                temp: 'temp',
+                humidity: 'humidity',
+                pressure: 'pressure',
+                ph: 'ph',
+                pH: 'ph',
+                tds: 'tds',
+                h2s: 'h2s',
+                h2s_ppm: 'h2s',
+                co: 'co',
+                co_ppm: 'co',
+                o2: 'o2',
+                do_mgL: 'o2',
+                waterLevel: 'waterLevel',
+                water_level: 'waterLevel'
+            };
+
+            function toFiniteNumber(value) {
+                const n = typeof value === 'number' ? value : Number(value);
+                return Number.isFinite(n) ? n : null;
+            }
+
+            function normalizeDashboardPayload(payload) {
+                let input = payload;
+                if (typeof input === 'string') {
+                    input = JSON.parse(input);
+                }
+
+                if (!input || typeof input !== 'object') return {};
+
+                const normalized = {};
+                Object.entries(rawKeyMap).forEach(([rawKey, metricKey]) => {
+                    if (input[rawKey] === undefined) return;
+                    const n = toFiniteNumber(input[rawKey]);
+                    if (n !== null) normalized[metricKey] = n;
+                });
+
+                return normalized;
+            }
+
+            function getConnectionState() {
+                if (!dashboardState.connected) return { text: 'Offline', className: 'status-offline' };
+                const stale = Date.now() - dashboardState.lastUpdated > 10000;
+                if (stale) return { text: 'Stale', className: 'status-stale' };
+                return { text: 'Online', className: 'status-online' };
+            }
+
+            function renderDashboard() {
+                const state = getConnectionState();
+
+                Object.entries(dashboardMetricConfig).forEach(([key, config]) => {
+                    const value = dashboardState.metrics[key];
+                    const formatted = Number.isFinite(value) ? value.toFixed(config.decimals) : '--';
+
+                    (valueBindings[key] || []).forEach((el) => {
+                        el.textContent = formatted;
+                    });
+
+                    (statusBindings[key] || []).forEach((el) => {
+                        el.textContent = state.text;
+                        el.classList.remove('status-online', 'status-stale', 'status-offline');
+                        el.classList.add(state.className);
+                    });
+
+                    (barBindings[key] || []).forEach((el) => {
+                        const pct = Number.isFinite(value) ? Math.max(0, Math.min(100, (value / config.max) * 100)) : 0;
+                        el.style.width = `${pct.toFixed(1)}%`;
+                    });
+                });
+            }
+
+            function setDashboardConnection(isConnected) {
+                dashboardState.connected = Boolean(isConnected);
+                if (dashboardState.connected) dashboardState.lastUpdated = Date.now();
+                renderDashboard();
+            }
+
+            function setDashboardData(payload, options = { markConnected: true }) {
+                const normalized = normalizeDashboardPayload(payload);
+                if (!Object.keys(normalized).length) return false;
+                Object.assign(dashboardState.metrics, normalized);
+                if (options.markConnected) {
+                    dashboardState.connected = true;
+                    dashboardState.lastUpdated = Date.now();
+                }
+                renderDashboard();
+                return true;
+            }
+
+            function processArduinoData(payload) {
+                try {
+                    const normalized = normalizeDashboardPayload(payload);
+                    const required = ['temp', 'pressure', 'humidity', 'tds', 'ph', 'h2s', 'co', 'o2'];
+                    if (!required.every((key) => Number.isFinite(normalized[key]))) return false;
+
+                    if (
+                        normalized.temp < -50 || normalized.temp > 100 ||
+                        normalized.pressure < 800 || normalized.pressure > 1200 ||
+                        normalized.humidity < 0 || normalized.humidity > 100 ||
+                        normalized.ph < 0 || normalized.ph > 14
+                    ) {
+                        return false;
+                    }
+
+                    return setDashboardData(normalized, { markConnected: true });
+                } catch (err) {
+                    console.warn('Invalid Arduino payload:', err);
+                    return false;
+                }
+            }
+
+            window.awrsDashboard = {
+                setData: (payload) => setDashboardData(payload, { markConnected: true }),
+                processArduinoData,
+                setConnection: setDashboardConnection,
+                getState: () => ({
+                    connected: dashboardState.connected,
+                    lastUpdated: dashboardState.lastUpdated,
+                    metrics: { ...dashboardState.metrics }
+                })
+            };
+
+            window.addEventListener('awrs:sensor-data', (event) => {
+                if (event && event.detail !== undefined) {
+                    processArduinoData(event.detail);
+                }
+            });
+
+            setInterval(() => {
+                if (dashboardState.connected) renderDashboard();
+            }, 1000);
+
+            renderDashboard();
+
+            // ─── Dashboard Toggle Logic ───
+            const dashBtn = document.getElementById('dash-btn');
+            const clContainer = document.getElementById('cl-container');
+            const dashBtnText = dashBtn.querySelector('span');
+
+            // Micro-frontend loader
+            let reactDashboardLoaded = false;
+            let reactDashboardLoading = false;
+
+            async function loadReactDashboard() {
+                if (reactDashboardLoaded || reactDashboardLoading) return;
+                reactDashboardLoading = true;
+
+                const script = document.createElement('script');
+                // Expect a prebuilt module exposing window.AWRSDashboardMicrofrontend with mount/unmount API
+                script.type = 'module';
+                script.src = 'dashboard.bundle.js';
+                script.onload = () => {
+                    if (window.AWRSDashboardMicrofrontend && typeof window.AWRSDashboardMicrofrontend.mount === 'function') {
+                        const mountTarget = document.getElementById('react-dashboard-root');
+                        mountTarget.style.display = 'block';
+                        const fallback = document.getElementById('dashboard-fallback');
+                        if (fallback) fallback.remove();
+                        window.AWRSDashboardMicrofrontend.mount('#react-dashboard-root');
+                        reactDashboardLoaded = true;
+                    } else {
+                        console.warn('dashboard.bundle.js loaded but mount API not found');
+                    }
+                };
+                script.onerror = () => {
+                    console.warn('dashboard.bundle.js failed to load; showing fallback dashboard.');
+                };
+                document.body.appendChild(script);
+            }
+
+            dashBtn.addEventListener('click', () => {
+                clContainer.classList.toggle('dashboard-active');
+                const isOpen = clContainer.classList.contains('dashboard-active');
+                dashBtnText.textContent = isOpen ? 'Close Dashboard' : 'View Dashboard';
+
+                if (isOpen) {
+                    loadReactDashboard();
+                }
+
+                // Force a resize so the canvas picks up the panel width transition quickly.
+                setTimeout(() => {
+                    const r = container.getBoundingClientRect();
+                    clCamera.aspect = r.width / r.height;
+                    clCamera.updateProjectionMatrix();
+                    clRenderer.setSize(r.width, r.height);
+                    renderDashboard();
+                }, 50);
+            });
+        }
+
+        // ─── Lazy init: only when section scrolls into view ───
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    initCloserLook();
+                    observer.disconnect();
+                }
+            });
+        }, { threshold: 0.1 });
+        observer.observe(document.getElementById('closer-look'));
+    </script>
+</body>
+
+</html>

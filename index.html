@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWRS - Aqua Well Robot Solution</title>
+
+    <!-- Font integration -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            /* Global reset to stop scrollbars */
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --glass-bg: rgba(25, 25, 27, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+
+            /* Ocean Theme */
+            --ocean-primary: 198, 87%, 45%;
+            --ocean-secondary: 191, 100%, 55%;
+            --ocean-light: 191, 76%, 90%;
+            --ocean-dark: 198, 87%, 20%;
+            --ocean-glow: 191, 100%, 75%;
+
+            /* River Theme */
+            --river-primary: 178, 85%, 38%;
+            --river-secondary: 172, 85%, 55%;
+            --river-light: 172, 45%, 92%;
+            --river-dark: 178, 85%, 18%;
+
+            /* Forest Theme */
+            --forest-primary: 162, 68%, 38%;
+            --forest-secondary: 155, 68%, 55%;
+            --forest-light: 155, 35%, 92%;
+            --forest-dark: 162, 68%, 18%;
+
+            /* Water Theme */
+            --water-flow: 185, 95%, 60%;
+            --water-deep: 220, 95%, 25%;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* LENIS */
+        html.lenis,
+        html.lenis body {
+            height: auto;
+        }
+
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+
+        .lenis.lenis-smooth [data-lenis-prevent] {
+            overscroll-behavior: contain;
+        }
+
+        .lenis.lenis-stopped {
+            overflow: hidden;
+        }
+
+        .lenis.lenis-smooth iframe {
+            pointer-events: none;
+        }
+
+        /* GLOBAL NAV */
+        nav {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: max-content;
+            min-width: 600px;
+            height: 56px;
+            background: rgba(15, 15, 20, 0.45);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 32px;
+            gap: 40px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .nav-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-logo-img {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1), text-shadow 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+        }
+
+        /* CANVAS CONTAINER */
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            /* Canvas renders BEHIND hero text */
+            pointer-events: none;
+        }
+
+        /* SECTION 1: HERO */
+        .hero {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            overflow: hidden;
+            z-index: 5;
+            /* Hero text renders ABOVE canvas */
+        }
+
+        .hero-content {
+            position: absolute;
+            top: 12vh;
+            /* Higher up to leave more space for the robot below */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            padding: 0 20px;
+            pointer-events: none;
+            /* Let clicks pass through to potential 3D */
+        }
+
+        .hero-title {
+            font-size: clamp(1.5rem, 3vw, 2.8rem);
+            font-weight: 500;
+            letter-spacing: -0.015em;
+            color: #f5f5f7;
+            margin-bottom: -15px;
+            /* Tighter leading like Apple */
+            will-change: transform, opacity;
+            text-align: center;
+        }
+
+        /* SECTION 2: BENTO GRID */
+        .features-section {
+            position: relative;
+            padding: 180px max(40px, 4vw);
+            max-width: 1600px;
+            margin: 0 auto;
+            z-index: 10;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 100px;
+        }
+
+        .section-title {
+            font-size: clamp(3rem, 6vw, 4.5rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+
+        /* CLOSER LOOK INTERACTIVE SECTION */
+        .closer-look {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            box-sizing: border-box;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .closer-look-container {
+            position: relative;
+            width: 100%;
+            max-width: 1800px;
+            height: 90vh;
+            min-height: 800px;
+            background: rgba(10, 10, 15, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            /* Brightened the background with a subtle inner glow */
+            box-shadow: inset 0 0 100px rgba(59, 130, 246, 0.03), 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            /* Restored to clip dashboard slide-in */
+            display: flex;
+            flex-direction: row;
+            /* Layout transition properties */
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* 3D Canvas wrapper */
+        .cl-canvas-wrapper {
+            position: relative;
+            flex: 1;
+            height: 100%;
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Compress the 3D model to the left when dashboard opens */
+        .closer-look-container.dashboard-active .cl-canvas-wrapper {
+            transform: translateX(calc(-1 * min(40%, 300px)));
+        }
+
+        #cl-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .cl-spec-menu {
+            position: relative;
+            width: 320px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 40px;
+            padding-right: 20px;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        /* Specification menu position */
+        .cl-spec-btn {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f5f5f7;
+            padding: 16px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-width: 280px;
+            max-width: 380px;
+            text-align: left;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .cl-spec-btn-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .cl-spec-btn .cl-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .cl-spec-btn .cl-label {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .cl-spec-btn .cl-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 400;
+        }
+
+        .cl-spec-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .cl-spec-btn:hover .cl-icon {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .cl-spec-btn.active {
+            background: rgba(15, 15, 20, 0.85);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .cl-spec-btn.active .cl-icon {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .cl-spec-details {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left;
+            animation: expandDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .cl-spec-details p {
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+        }
+
+        @keyframes expandDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cl-spec-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .cl-spec-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 5px 10px;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #93c5fd;
+        }
+
+        .cl-spec-tag::before {
+            content: '✦';
+            font-size: 7px;
+            opacity: 0.6;
+        }
+
+        .cl-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.02em;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .closer-look-container.dashboard-active .cl-hint {
+            opacity: 0;
+        }
+
+        /* DASHBOARD TOGGLE BUTTON */
+        .dashboard-toggle-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(15, 15, 20, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-toggle-btn:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+        }
+
+        /* DASHBOARD PANEL */
+        .dashboard-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            max-width: 600px;
+            height: 100%;
+            background: var(--awrs-bg, #f5f9fa);
+            /* Light theme */
+            border-left: 1px solid var(--awrs-border, #d2dcde);
+            box-shadow: -15px 0 50px rgba(0, 0, 0, 0.1);
+            padding: 30px 40px;
+            border-radius: 0 24px 24px 0;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease;
+            overflow-y: auto;
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        .closer-look-container.dashboard-active .dashboard-panel {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* React Dashboard Styles */
+        :root {
+            --awrs-bg: #f5f9fa;
+            --awrs-card: #f0f6f7;
+            --awrs-muted: #e5eeef;
+            --awrs-border: #d2dcde;
+            --awrs-text: #0b1b2b;
+            --awrs-text-muted: #5f8190;
+            --awrs-primary: #0f8fd6;
+            --awrs-primary-2: #1ac8e0;
+            --awrs-success: #10b981;
+            --awrs-danger: #d94040;
+            --awrs-danger-bg: #ffecec;
+            --awrs-success-bg: #e8ffef;
+            --awrs-progress: #4fc3f7;
+            --awrs-progress-track: #e5f6ff;
+            --awrs-card-radius: 14px;
+            --awrs-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 6px 18px rgba(15, 143, 214, 0.08);
+        }
+
+        .awrs-panel {
+            font-family: "Inter", system-ui, -apple-system, sans-serif;
+            color: var(--awrs-text);
+            background: var(--awrs-bg);
+            padding: 0;
+        }
+
+        .awrs-hero {
+            background: linear-gradient(135deg, #0f8dc5, #15d1ff);
+            color: #fff;
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--awrs-shadow);
+        }
+
+        .awrs-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .awrs-hero-title {
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .awrs-hero-sub {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .awrs-cta {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 14px;
+            background: #ef4444;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--awrs-shadow);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .awrs-card {
+            background: var(--awrs-card);
+            border: 1px solid var(--awrs-border);
+            border-radius: var(--awrs-card-radius);
+            box-shadow: var(--awrs-shadow);
+            padding: 16px 18px;
+            margin-top: 14px;
+        }
+
+        .awrs-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .awrs-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--awrs-primary);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .awrs-badge {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .awrs-badge.offline {
+            background: var(--awrs-danger-bg);
+            color: var(--awrs-danger);
+        }
+
+        .awrs-badge.online {
+            background: var(--awrs-success-bg);
+            color: var(--awrs-success);
+        }
+
+        .awrs-video {
+            position: relative;
+            background: #0c1f1f;
+            color: #8aa5a5;
+            height: 230px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .awrs-video::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.35));
+        }
+
+        .awrs-video-content {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 4px;
+        }
+
+        .awrs-video h3 {
+            margin: 0;
+            font-size: 24px;
+            color: #d0e7e7;
+        }
+
+        .awrs-video small {
+            color: #8aa5a5;
+        }
+
+        .awrs-water-row {
+            margin-top: 12px;
+            background: linear-gradient(90deg, rgba(19, 200, 240, 0.08), rgba(12, 143, 214, 0.04));
+            border: 1px solid var(--awrs-border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .awrs-water-val {
+            font-weight: 700;
+            color: var(--awrs-primary);
+            font-size: 20px;
+        }
+
+        .awrs-progress-track {
+            width: 100%;
+            height: 8px;
+            background: var(--awrs-progress-track);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .awrs-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--awrs-primary), var(--awrs-primary-2));
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        .awrs-grid3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .awrs-grid2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .awrs-tile {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--awrs-border);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .awrs-tile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: var(--awrs-text);
+        }
+
+        .awrs-value {
+            font-weight: 700;
+            font-size: 22px;
+            color: var(--awrs-primary);
+        }
+
+        .awrs-sub {
+            font-size: 12px;
+            color: var(--awrs-text-muted);
+        }
+
+        .awrs-bar {
+            margin-top: 6px;
+            background: #e9f4ec;
+            border-radius: 999px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .awrs-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #47c98b);
+        }
+
+        .awrs-bar-red {
+            height: 6px;
+            background: linear-gradient(90deg, #ef4444, #f59e0b);
+            border-radius: 999px;
+        }
+
+        .awrs-card-muted {
+            background: #f7fbfc;
+        }
+
+        @media (max-width: 900px) {
+            .awrs-grid3 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+
+            .awrs-grid3,
+            .awrs-grid2 {
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 900px) {
+            .cl-spec-menu {
+                position: absolute;
+                left: 10px;
+                right: 10px;
+                top: auto;
+                bottom: 50px;
+                transform: none;
+                flex-direction: row;
+                overflow-x: auto;
+                gap: 6px;
+                padding: 8px 4px;
+                scrollbar-width: none;
+            }
+
+            .cl-spec-menu::-webkit-scrollbar {
+                display: none;
+            }
+
+            .cl-spec-btn {
+                min-width: 140px;
+                padding: 10px 12px;
+                font-size: 11px;
+                flex-shrink: 0;
+            }
+
+            .cl-spec-btn .cl-sub {
+                display: none;
+            }
+
+            .cl-info-panel {
+                position: absolute;
+                top: auto;
+                bottom: 6px;
+                left: 10px;
+                right: 10px;
+                width: calc(100% - 20px);
+                transform: translateY(100%);
+                max-height: 55vh;
+                padding: 18px;
+            }
+
+            .cl-info-panel.visible {
+                transform: translateY(0);
+            }
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 80px 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .footer-logo {
+            height: 48px;
+            width: auto;
+            opacity: 0.8;
+            filter: grayscale(100%) brightness(200%);
+            transition: all 0.3s ease;
+        }
+
+        .footer-logo:hover {
+            opacity: 1;
+            filter: grayscale(0%) brightness(100%);
+        }
+
+        footer p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 0.02em;
+        }
+    </style>
+
+    <!-- ES MOD MAP -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+
+    <!-- GLOBAL NAV -->
+    <nav>
+        <a href="#" class="nav-logo-container">
+            <img src="image.png" alt="AWRS Logo" class="nav-logo-img">
+            <div class="nav-logo">AWRS</div>
+        </a>
+        <div class="nav-links">
+            <a href="#overview">Overview</a>
+            <a href="#closer-look">3D Showcase</a>
+            <a href="#tech">Methodology</a>
+            <a href="#investors">Investors</a>
+            <a href="#contributions">Contributions</a>
+        </div>
+    </nav>
+
+    <!-- WEBGL BACKGROUND -->
+    <div id="webgl-container"></div>
+
+    <!-- SECTION 1: HERO -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h2 class="hero-title">Aqua Well</h2>
+        </div>
+    </section>
+
+
+
+    <!-- SECTION 2.5: TAKE A CLOSER LOOK -->
+    <section class="closer-look" id="closer-look">
+        <h2>Take a closer look.</h2>
+        <div class="closer-look-container" id="cl-container">
+            <button class="dashboard-toggle-btn" id="dash-btn">
+                <span>View Dashboard</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
+                </svg>
+            </button>
+
+            <div class="cl-spec-menu">
+                <div class="cl-spec-btn" data-part="Part7">
+                    <div class="cl-spec-btn-header">
+                        <span class="cl-icon">⚙</span>
+                        <span class="cl-label">
+                            <span>Lower Motor Assembly</span>
+                            <span class="cl-sub">Stabilization Base</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="cl-spec-btn" data-part="Part1">
+                    <div class="cl-spec-btn-header">
+                        <span class="cl-icon">🔬</span>
+                        <span class="cl-label">
+                            <span>Analytical Core</span>
+                            <span class="cl-sub">XRF & Camera System</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="cl-spec-btn" data-part="Part8">
+                    <div class="cl-spec-btn-header">
+                        <span class="cl-icon">🔧</span>
+                        <span class="cl-label">
+                            <span>Upper Motor & Wheels</span>
+                            <span class="cl-sub">Locomotion System</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="cl-spec-btn" data-part="Part2">
+                    <div class="cl-spec-btn-header">
+                        <span class="cl-icon">🧪</span>
+                        <span class="cl-label">
+                            <span>Sampling Tubes</span>
+                            <span class="cl-sub">Dual-Tube Collector</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cl-canvas-wrapper">
+                <canvas id="cl-canvas"></canvas>
+                <div class="cl-hint">Drag to rotate · Scroll to zoom · Click a component to inspect</div>
+            </div>
+
+            <!-- DASHBOARD PANEL -->
+            <div class="dashboard-panel">
+                <div class="awrs-panel">
+                    <div class="awrs-hero">
+                        <div class="awrs-hero-left">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <circle cx="12" cy="12" r="6"></circle>
+                                <circle cx="12" cy="12" r="2"></circle>
+                            </svg>
+                            <div>
+                                <div class="awrs-hero-title">AWRS Dashboard</div>
+                                <div class="awrs-hero-sub">Real-time environmental and water quality monitoring</div>
+                            </div>
+                        </div>
+                        <button class="awrs-cta">Connect</button>
+                    </div>
+
+                    <div class="awrs-card">
+                        <div class="awrs-card-header">
+                            <div class="awrs-title">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m22 8-6 4 6 4V8Z"></path>
+                                    <rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>
+                                </svg>
+                                Camera & Water Level
+                            </div>
+                        </div>
+                        <div class="awrs-video">
+                            <div class="awrs-video-content">
+                                <h3>Live Camera Feed</h3>
+                                <small>Camera Offline</small>
+                                <small>Connect Raspberry Pi Camera</small>
+                            </div>
+                        </div>
+                        <div class="awrs-water-row">
+                            <div>
+                                <div class="awrs-sub">Water Level Distance</div>
+                                <div class="awrs-progress-track">
+                                    <div class="awrs-progress-fill" data-sensor-bar="waterLevel" style="width: 32%;">
+                                    </div>
+                                </div>
+                                <div class="awrs-sub">Distance from well surface to water surface</div>
+                            </div>
+                            <div class="awrs-water-val"><span data-sensor-value="waterLevel">3.2</span> meters</div>
+                        </div>
+                    </div>
+
+                    <div class="awrs-card">
+                        <div class="awrs-card-header">
+                            <div class="awrs-title" style="color: #1fa06a;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <circle cx="12" cy="12" r="6"></circle>
+                                    <circle cx="12" cy="12" r="2"></circle>
+                                </svg>
+                                Well Integrity
+                            </div>
+                            <span class="awrs-badge offline" data-sensor-status="temp">offline</span>
+                        </div>
+                        <div class="awrs-grid3">
+                            <div class="awrs-tile">
+                                <div class="awrs-tile-header">
+                                    <span>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>
+                                        </svg>
+                                        Temperature
+                                    </span>
+                                    <span class="awrs-badge online" data-sensor-status="temp">online</span>
+                                </div>
+                                <div class="awrs-value"><span data-sensor-value="temp">24.5</span> °C</div>
+                            </div>
+                            <div class="awrs-tile">
+                                <div class="awrs-tile-header">
+                                    <span>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 2.9 7 2.9s-2.15 6.16-2.29 6.16c-1.14.93-1.71 2.03-1.71 3.19 0 2.22 1.8 4.05 4 4.05z">
+                                            </path>
+                                            <path
+                                                d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97">
+                                            </path>
+                                        </svg>
+                                        Humidity
+                                    </span>
+                                    <span class="awrs-badge online" data-sensor-status="humidity">online</span>
+                                </div>
+                                <div class="awrs-value"><span data-sensor-value="humidity">68.2</span> %</div>
+                            </div>
+                            <div class="awrs-tile">
+                                <div class="awrs-tile-header">
+                                    <span>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="m12 14 4-4"></path>
+                                            <path d="M3.34 19a10 10 0 1 1 17.32 0"></path>
+                                        </svg>
+                                        Air Pressure
+                                    </span>
+                                    <span class="awrs-badge online" data-sensor-status="pressure">online</span>
+                                </div>
+                                <div class="awrs-value"><span data-sensor-value="pressure">1012</span> hPa</div>
+                            </div>
+                        </div>
+                        <div class="awrs-card" style="background: #f7fbfc; margin-top: 12px; border-color: #e1ebee;">
+                            <div class="awrs-title" style="margin-bottom: 10px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12.8 19.6A2 2 0 1 0 14 16H2"></path>
+                                    <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"></path>
+                                    <path d="M9.8 4.4A2 2 0 1 1 11 8H2"></path>
+                                </svg>
+                                Gas Measurements
+                            </div>
+                            <div class="awrs-grid3">
+                                <div class="awrs-tile awrs-card-muted">
+                                    <div class="awrs-tile-header">
+                                        <span>H₂S Gas</span>
+                                        <span class="awrs-badge online" data-sensor-status="h2s">online</span>
+                                    </div>
+                                    <div class="awrs-value" style="color: #22c55e;"><span
+                                            data-sensor-value="h2s">0.5</span> ppm</div>
+                                    <div class="awrs-bar">
+                                        <div class="awrs-bar-fill" data-sensor-bar="h2s" style="width: 10%;"></div>
+                                    </div>
+                                </div>
+                                <div class="awrs-tile awrs-card-muted">
+                                    <div class="awrs-tile-header">
+                                        <span>CO Gas</span>
+                                        <span class="awrs-badge online" data-sensor-status="co">online</span>
+                                    </div>
+                                    <div class="awrs-value" style="color: #22c55e;"><span
+                                            data-sensor-value="co">2.1</span> ppm</div>
+                                    <div class="awrs-bar">
+                                        <div class="awrs-bar-fill" data-sensor-bar="co" style="width: 4.2%;"></div>
+                                    </div>
+                                </div>
+                                <div class="awrs-tile awrs-card-muted">
+                                    <div class="awrs-tile-header">
+                                        <span>O₂ Gas</span>
+                                        <span class="awrs-badge online" data-sensor-status="o2">online</span>
+                                    </div>
+                                    <div class="awrs-value" style="color: #22c55e;"><span
+                                            data-sensor-value="o2">20.9</span> %</div>
+                                    <div class="awrs-bar">
+                                        <div class="awrs-bar-fill" data-sensor-bar="o2" style="width: 83.6%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="awrs-card">
+                        <div class="awrs-card-header">
+                            <div class="awrs-title">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 2.9 7 2.9s-2.15 6.16-2.29 6.16c-1.14.93-1.71 2.03-1.71 3.19 0 2.22 1.8 4.05 4 4.05z">
+                                    </path>
+                                    <path
+                                        d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97">
+                                    </path>
+                                </svg>
+                                Water Integrity
+                            </div>
+                            <span class="awrs-badge offline" data-sensor-status="ph">offline</span>
+                        </div>
+                        <div class="awrs-grid2">
+                            <div class="awrs-tile awrs-card-muted">
+                                <div class="awrs-tile-header">
+                                    <span>pH Level</span>
+                                    <span class="awrs-badge online" data-sensor-status="ph">online</span>
+                                </div>
+                                <div class="awrs-value" style="color: #22c55e;"><span data-sensor-value="ph">7.8</span>
+                                    pH</div>
+                                <div class="awrs-sub">Quality Level</div>
+                                <div class="awrs-bar-red"></div>
+                            </div>
+                            <div class="awrs-tile awrs-card-muted">
+                                <div class="awrs-tile-header">
+                                    <span>TDS (Minerals)</span>
+                                    <span class="awrs-badge online" data-sensor-status="tds">online</span>
+                                </div>
+                                <div class="awrs-value" style="color: #22c55e;"><span data-sensor-value="tds">342</span>
+                                    ppm</div>
+                                <div class="awrs-sub">Quality Level</div>
+                                <div class="awrs-bar-red"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+
+    <!-- FOOTER -->
+    <footer>
+        <img src="image.png" alt="AWRS Logo" class="footer-logo">
+        <p>&copy; 2026 AWRS Technologies. All rights reserved.</p>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <!-- External Depedencies: GSAP & Lenis via standard script tags to optimize initialization -->
+    <script src="https://unpkg.com/lenis@1.1.14/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // 1. LENIS - MOMENTUM SCROLL
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Connect Lenis with GSAP ScrollTrigger
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => {
+            lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0);
+
+        // 2. THREE.JS - WEBGL EXCELLENCE
+        const container = document.getElementById('webgl-container');
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+        // Move camera out a bit so robot fits well
+        camera.position.set(0, 0, 700);
+
+        // Renderer matching Apple config
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(width, height);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 3.5; // Significantly increased exposure for high brightness
+        container.appendChild(renderer.domElement);
+
+        // Cinematic HDR Lighting setup
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+        const envMap = pmremGenerator.fromScene(new RoomEnvironment()).texture;
+        scene.environment = envMap;
+
+        // Post-Processing for specular bloom
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.25, 0.6, 0.85);
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        const robot = new THREE.Group();
+        scene.add(robot);
+
+        // Materials logic reflecting precise awrs-showcase.html colors
+        const pbrBase = {
+            metalness: 0.6,
+            roughness: 0.32,
+            clearcoat: 0.25,
+            clearcoatRoughness: 0.3,
+            envMapIntensity: 2.2 // Boosted for RoomEnvironment
+        };
+
+        const materials = {
+            mainBody: new THREE.MeshPhysicalMaterial({
+                ...pbrBase,
+                color: 0x2558c4
+            }),
+            motorHousing: new THREE.MeshPhysicalMaterial({
+                ...pbrBase,
+                color: 0x1e4cb5,
+                metalness: 0.65,
+                roughness: 0.28
+            }),
+            rubber: new THREE.MeshPhysicalMaterial({
+                color: 0x354868,
+                metalness: 0.55,
+                roughness: 0.4,
+                clearcoat: 0.2,
+                envMapIntensity: 2.8
+            }),
+            chrome: new THREE.MeshPhysicalMaterial({
+                color: 0x7a8da8,
+                metalness: 0.65,
+                roughness: 0.2,
+                clearcoat: 0.4,
+                clearcoatRoughness: 0.15,
+                envMapIntensity: 3.0
+            })
+        };
+
+        function getSTLUrl(fileName) {
+            if (window.location.protocol === 'blob:') {
+                return window.location.origin + '/' + fileName;
+            }
+            return fileName;
+        }
+
+        const loader = new STLLoader();
+        const stlFiles = ['Part1.stl', 'Part2.stl', 'Part4.stl', 'Part7.stl', 'Part8.stl'];
+
+        let loadedCount = 0;
+
+        stlFiles.forEach((file) => {
+            loader.load(
+                getSTLUrl(file),
+                (geometry) => {
+                    const key = file.replace('.stl', '');
+
+                    // Align rotation based on original showcase logic
+                    if (key !== 'Part2') geometry.rotateX(-Math.PI / 2);
+                    if (key === 'Part7') geometry.rotateX(Math.PI);
+                    if (key === 'Part4') geometry.rotateY(Math.PI);
+
+                    // Center geometry bounds for local positioning
+                    geometry.computeBoundingBox();
+                    const box = geometry.boundingBox;
+                    geometry.translate(
+                        -(box.min.x + box.max.x) / 2,
+                        -(box.min.y + box.max.y) / 2,
+                        -(box.min.z + box.max.z) / 2
+                    );
+                    geometry.computeVertexNormals();
+
+                    // Heuristic material assignment from showcase
+                    // Part1 & Part4 = mainBody (both are cage halves)
+                    // Part8 = motorHousing, Part7 = rubber, Part2 = chrome
+                    let mat = materials.mainBody;
+                    if (key === 'Part8') mat = materials.motorHousing;
+                    else if (key === 'Part7') mat = materials.rubber;
+                    else if (key === 'Part2') mat = materials.chrome;
+                    // Part1 and Part4 both use mainBody (cage structure)
+
+                    const mesh = new THREE.Mesh(geometry, mat);
+
+                    // Apply precise vertical stacking and depth adjustments from showcase
+                    const baseAnchor = -200;
+                    const yCage = baseAnchor + 41.2 + 149;
+                    const yTop = yCage + 149 + 41.6;
+
+                    if (key === 'Part7') mesh.position.y = baseAnchor;
+                    else if (key === 'Part8') mesh.position.y = yTop;
+                    else mesh.position.y = yCage;
+
+                    // Depth offsets for the cage pieces
+                    if (key === 'Part1') mesh.position.z = 38.71;
+                    if (key === 'Part4') mesh.position.z = -38.71;
+
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    robot.add(mesh);
+                    loadedCount++;
+
+                    if (loadedCount === stlFiles.length) {
+                        // ─── Glass fill for cage windows (exact match from showcase) ───
+                        const baseAnchorGlass = -200;
+                        const yCageGlass = baseAnchorGlass + 41.2 + 149;
+                        const halfH = 130;
+                        const barrelPoints = [];
+                        const segments = 24;
+                        for (let i = 0; i <= segments; i++) {
+                            const t = i / segments;
+                            const y = -halfH + t * halfH * 2;
+                            const curve = 1 - Math.pow((t - 0.5) * 2, 2);
+                            const r = 56 + curve * 12;
+                            barrelPoints.push(new THREE.Vector2(r, y));
+                        }
+                        const glassGeo = new THREE.LatheGeometry(barrelPoints, 32);
+                        const glassMat = new THREE.MeshPhysicalMaterial({
+                            color: 0x010103,
+                            metalness: 0.05,
+                            roughness: 0.8,
+                            transparent: false,
+                            opacity: 1.0,
+                            clearcoat: 0.2,
+                            clearcoatRoughness: 0.3,
+                            side: THREE.DoubleSide
+                        });
+                        const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+                        glassMesh.position.y = yCageGlass;
+                        glassMesh.renderOrder = -1; // render behind cage bars
+                        robot.add(glassMesh);
+
+                        // Re-center full group accurately by shifting children
+                        const groupBounds = new THREE.Box3().setFromObject(robot);
+                        const center = groupBounds.getCenter(new THREE.Vector3());
+                        robot.children.forEach(child => {
+                            child.position.sub(center);
+                        });
+                    }
+                },
+                undefined,
+                (error) => {
+                    console.warn('Could not load STL: ', file, error);
+                }
+            );
+        });
+
+        // Initial setup: model starts UPRIGHT for the startup animation
+        robot.rotation.x = 0;
+        robot.rotation.y = 0;
+        robot.rotation.z = 0;
+        robot.scale.set(1.45, 1.45, 1.45);
+        robot.position.set(0, -130, 0);
+
+        // 3. GSAP SCROLL PHYSICS & ACCUEIL ANIMATION
+
+        // Start blacked out for the "lighting up" reveal
+        renderer.toneMappingExposure = 0;
+
+        // Hero Text Fade & Cinematic Light Reveal
+        const introTl = gsap.timeline();
+
+        introTl.to(renderer, {
+            toneMappingExposure: 3.5, // Fade the lighting in to high brightness
+            duration: 3.5,
+            ease: "power2.inOut",
+            delay: 0.5 // Wait a beat before lighting up
+        }, 0);
+
+        introTl.from(".hero-title", {
+            y: 20, /* Reduced travel distance */
+            opacity: 0,
+            duration: 1.5,
+            ease: "power3.out",
+            delay: 0.1
+        }, 0);
+
+        // Startup animation: tilt the model from upright into its resting pose
+        introTl.to(robot.rotation, {
+            x: -0.35,
+            y: -0.10,
+            z: 0.03,
+            duration: 2.5,
+            ease: "power2.out",
+            delay: 0.8
+        }, 0);
+
+        // Hide the 3D model when scrolling past the hero section
+        gsap.to('#webgl-container', {
+            opacity: 0,
+            ease: 'none',
+            scrollTrigger: {
+                trigger: '.hero',
+                start: 'bottom 80%',
+                end: 'bottom 20%',
+                scrub: true
+            }
+        });
+
+        // Parallax hero text out
+        gsap.to(".hero-content", {
+            y: -200,
+            opacity: 0,
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".hero",
+                start: "top top",
+                end: "bottom top",
+                scrub: true
+            }
+        });
+
+        // Robot stands completely still after intro — no scroll-linked transforms
+
+        // 4. PERFORMANCE & RENDER LOOP
+        const clock = new THREE.Clock();
+
+        // Intersection observer to pause rendering when canvas completely out of viewport
+        // (technically fixed over 100vh, so it shouldn't leave, but this honors the prompt's safeguard)
+        let renderRequested = true;
+        const bodyObserver = new IntersectionObserver((entries) => {
+            renderRequested = entries[0].isIntersecting;
+        }, { threshold: 0 });
+        bodyObserver.observe(document.body);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (renderRequested) {
+                // No continuous animation — robot stands still
+                // Just render the scene
+                composer.render();
+            }
+        }
+        animate();
+
+        // Resize handling
+        window.addEventListener('resize', () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            composer.setSize(width, height);
+        });
+    </script>
+
+    <!-- CLOSER LOOK INTERACTIVE 3D VIEWER -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ─── Part Information ───
+        const clPartInfo = {
+            'Part7': {
+                title: 'Lower Motor Assembly',
+                description: 'The foundation of the AWRS featuring hydraulic stabilization wheels. Navigates the well using a motorized lifting mechanism on a guided steel cable, pausing at precise depth intervals.',
+                specs: ['Hydraulic Stabilization', '222mm Form Factor', 'Precision Positioning', 'Motorized Cable Lift']
+            },
+            'Part1': {
+                title: 'Analytical Core',
+                description: 'The central intelligence unit containing XRF sensors for metal integrity, high-definition cameras for 360° inspection, and an advanced sensing array for real-time diagnostics.',
+                specs: ['pH, EC, TDS, TSS', 'Gas: H2S, CO2, CH4, SO2', 'EIS AI Model (96%)', 'Live Remote Telemetry']
+            },
+            'Part8': {
+                title: 'Suspension System',
+                description: 'The upper support mechanism built with a corrosion-resistant stainless-steel chassis capable of enduring harsh hydrogeological conditions, up to 60°C and 100% humidity.',
+                specs: ['Grade-5 Durability', 'Water-proof Enclosures', 'High Load Capacity', 'Corrosion Resistant']
+            },
+            'Part2': {
+                title: 'Sampling Mechanism',
+                description: 'A custom hydraulically actuated module that simultaneously extracts discrete, uncorrupted fluid samples from multiple strata without cross-contamination.',
+                specs: ['500ml Surface Sampler', '1L Deep-Water System', 'Auto-Sealing Valves', 'Internal Storage Chambers']
+            }
+        };
+
+        let clInitialized = false;
+
+        function initCloserLook() {
+            if (clInitialized) return;
+            clInitialized = true;
+
+            const canvas = document.getElementById('cl-canvas');
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+
+            // ─── Scene ───
+            const clScene = new THREE.Scene();
+            clScene.background = new THREE.Color(0x0a0a0e);
+
+            const clCamera = new THREE.PerspectiveCamera(40, rect.width / rect.height, 1, 5000);
+            clCamera.position.set(350, 80, 350);
+
+            const clRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            clRenderer.setSize(rect.width, rect.height);
+            clRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            clRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+            clRenderer.toneMappingExposure = 2.5; // High exposure for brighter model
+            clRenderer.outputEncoding = THREE.sRGBEncoding;
+
+            // ─── Controls ───
+            const clControls = new OrbitControls(clCamera, canvas);
+            clControls.enableDamping = true;
+            clControls.dampingFactor = 0.06;
+            clControls.minDistance = 100;
+            clControls.maxDistance = 700;
+            clControls.enablePan = false;
+            clControls.autoRotate = true;
+            clControls.autoRotateSpeed = 0.8;
+
+            // ─── Lighting ───
+            clScene.add(new THREE.AmbientLight(0xffffff, 1.5));
+
+            const clKey = new THREE.DirectionalLight(0xfff5e6, 6.0);
+            clKey.position.set(150, 300, 200);
+            clScene.add(clKey);
+
+            const clBack = new THREE.DirectionalLight(0x93c5fd, 4.0);
+            clBack.position.set(-200, 100, -200);
+            clScene.add(clBack);
+
+            const clUp = new THREE.PointLight(0x2563eb, 2.5, 800);
+            clUp.position.set(0, -150, 0);
+            clScene.add(clUp);
+
+            // ─── Environment Map ───
+            const pmrem = new THREE.PMREMGenerator(clRenderer);
+            pmrem.compileEquirectangularShader();
+            const envScene = new THREE.Scene();
+            envScene.background = new THREE.Color(0x1a1a1a);
+            const envGeo = new THREE.PlaneGeometry(100, 100);
+            const top = new THREE.Mesh(envGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffffff).multiplyScalar(2.0) }));
+            top.position.set(0, 100, 0); top.rotation.x = Math.PI / 2;
+            envScene.add(top);
+            const side = new THREE.Mesh(envGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(0x93c5fd).multiplyScalar(1.0) }));
+            side.position.set(-100, 20, -50); side.lookAt(0, 0, 0);
+            envScene.add(side);
+            clScene.environment = pmrem.fromScene(envScene).texture;
+
+            // ─── Materials ───
+            const pbrBase = { metalness: 0.6, roughness: 0.32, clearcoat: 0.25, clearcoatRoughness: 0.3, envMapIntensity: 1.4 };
+            const clMats = {
+                mainBody: new THREE.MeshPhysicalMaterial({ ...pbrBase, color: 0x1845a8 }),
+                motorHousing: new THREE.MeshPhysicalMaterial({ ...pbrBase, color: 0x143898, metalness: 0.65, roughness: 0.28 }),
+                rubber: new THREE.MeshPhysicalMaterial({ color: 0x161f30, metalness: 0.25, roughness: 0.75, clearcoat: 0.05, envMapIntensity: 1.0 }),
+                chrome: new THREE.MeshPhysicalMaterial({ color: 0x7a8da8, metalness: 0.65, roughness: 0.2, clearcoat: 0.4, envMapIntensity: 2.0 })
+            };
+
+            function getMat(f) {
+                if (f.includes('Part8')) return clMats.motorHousing;
+                if (f.includes('Part1') || f.includes('Part4')) return clMats.mainBody;
+                if (f.includes('Part7')) return clMats.rubber;
+                if (f.includes('Part2')) return clMats.chrome;
+                return clMats.mainBody;
+            }
+
+            // ─── Load STL Parts ───
+            const clLoader = new STLLoader();
+            const clParts = {};
+            const clGroup = new THREE.Group();
+            const clMiddleGroup = new THREE.Group(); // Sub-group for middle parts
+            clGroup.add(clMiddleGroup);
+            clScene.add(clGroup);
+            const files = ['Part1.stl', 'Part2.stl', 'Part4.stl', 'Part7.stl', 'Part8.stl'];
+            let loaded = 0;
+            let middleIsRotating = false; // Flag to spin middle only
+
+            files.forEach(file => {
+                clLoader.load(file, (geo) => {
+                    const mat = getMat(file).clone();
+                    const mesh = new THREE.Mesh(geo, mat);
+                    const key = file.replace('.stl', '');
+
+                    // Rotation to stand upright
+                    if (key !== 'Part2') geo.rotateX(-Math.PI / 2);
+                    if (key === 'Part7') geo.rotateX(Math.PI);
+                    if (key === 'Part4') geo.rotateY(Math.PI);
+
+                    // Center geometry
+                    geo.computeBoundingBox();
+                    const box = geo.boundingBox;
+                    geo.translate(
+                        -(box.min.x + box.max.x) / 2,
+                        -(box.min.y + box.max.y) / 2,
+                        -(box.min.z + box.max.z) / 2
+                    );
+
+                    clParts[key] = mesh;
+
+                    // Stacking positions (bottom up)
+                    const base = -200;
+                    const yBottom = base;
+                    const yCage = yBottom + 41.2 + 149;
+                    const yTop = yCage + 149 + 41.6;
+                    const posMap = { 'Part7': yBottom, 'Part1': yCage, 'Part4': yCage, 'Part8': yTop, 'Part2': yCage };
+                    mesh.position.y = posMap[key] || 0;
+                    if (key === 'Part1') mesh.position.z = 38.71;
+                    if (key === 'Part4') mesh.position.z = -38.71;
+
+                    if (key === 'Part7' || key === 'Part8') {
+                        clGroup.add(mesh); // Static top and bottom
+                    } else {
+                        clMiddleGroup.add(mesh); // Rotating middle parts
+                    }
+                    loaded++;
+
+                    if (loaded === files.length) {
+                        // Add glass fill for cage windows
+                        const yCageGlass = base + 41.2 + 149;
+                        const halfH = 130;
+                        const pts = [];
+                        for (let i = 0; i <= 24; i++) {
+                            const t = i / 24;
+                            const y = -halfH + t * halfH * 2;
+                            const curve = 1 - Math.pow((t - 0.5) * 2, 2);
+                            pts.push(new THREE.Vector2(56 + curve * 12, y));
+                        }
+                        const glassGeo = new THREE.LatheGeometry(pts, 32);
+                        const glassMat = new THREE.MeshPhysicalMaterial({
+                            color: 0x010103, metalness: 0.05, roughness: 0.8,
+                            clearcoat: 0.2, side: THREE.DoubleSide
+                        });
+                        const glass = new THREE.Mesh(glassGeo, glassMat);
+                        glass.position.y = yCageGlass;
+                        glass.renderOrder = -1;
+                        clMiddleGroup.add(glass); // Add glass to middle group
+
+                        // Auto-center
+                        const bbox = new THREE.Box3().setFromObject(clGroup);
+                        const center = bbox.getCenter(new THREE.Vector3());
+                        const size = bbox.getSize(new THREE.Vector3());
+                        const fitDist = Math.max(size.x, size.y, size.z) * 1.8;
+                        clControls.target.copy(center);
+                        clCamera.position.set(center.x + fitDist * 0.55, center.y + fitDist * 0.1, center.z + fitDist * 0.55);
+                        clControls.update();
+                    }
+                });
+            });
+
+            // ─── Animation Loop ───
+            function clAnimate() {
+                requestAnimationFrame(clAnimate);
+                clControls.update();
+
+                if (middleIsRotating) {
+                    clMiddleGroup.rotation.y += 0.015; // Spin middle part
+                }
+
+                clRenderer.render(clScene, clCamera);
+            }
+            clAnimate();
+
+            // ─── UI: Spec Buttons ───
+            document.querySelectorAll('.cl-spec-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    clFocus(btn.dataset.part, btn);
+                });
+            });
+
+            function clFocus(partName, btnEl) {
+                if (btnEl && btnEl.classList.contains('active')) {
+                    clReset();
+                    return;
+                }
+
+                clControls.autoRotate = false;
+                document.querySelectorAll('.cl-spec-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.cl-spec-details').forEach(el => el.remove());
+
+                if (btnEl) btnEl.classList.add('active');
+
+                if (partName === 'Part1') {
+                    middleIsRotating = true; // Rotate middle when Analytical Core is clicked
+                } else {
+                    middleIsRotating = false;
+                    // Reset smoothly to 0 if not rotating
+                    if (window.gsap) gsap.to(clMiddleGroup.rotation, { y: 0, duration: 0.8, ease: "power2.out" });
+                }
+
+                const info = clPartInfo[partName];
+                if (info && btnEl) {
+                    const details = document.createElement('div');
+                    details.className = 'cl-spec-details';
+                    details.innerHTML = `
+                        <p>${info.description}</p>
+                        <div class="cl-spec-tags">
+                            ${info.specs.map(s => `<span class="cl-spec-tag">${s}</span>`).join('')}
+                        </div>
+                    `;
+                    btnEl.appendChild(details);
+                }
+            }
+
+            function clReset() {
+                clControls.autoRotate = true;
+                middleIsRotating = false;
+                if (window.gsap) gsap.to(clMiddleGroup.rotation, { y: 0, duration: 0.8, ease: "power2.out" });
+                document.querySelectorAll('.cl-spec-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.cl-spec-details').forEach(el => el.remove());
+            }
+
+            // Raycasting omitted logic referencing old back button
+            const clRay = new THREE.Raycaster();
+            const clMouse = new THREE.Vector2();
+            canvas.addEventListener('click', (e) => {
+                const r = canvas.getBoundingClientRect();
+                clMouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+                clMouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+                clRay.setFromCamera(clMouse, clCamera);
+                const hits = clRay.intersectObjects(clGroup.children);
+                if (hits.length > 0) {
+                    const hit = hits[0].object;
+                    const partName = Object.keys(clParts).find(k => clParts[k] === hit);
+                    if (partName && clPartInfo[partName]) {
+                        const btn = document.querySelector(`.cl-spec-btn[data-part="${partName}"]`);
+                        clFocus(partName, btn);
+                    }
+                }
+            });
+
+            // ─── Resize ───
+            const ro = new ResizeObserver(() => {
+                const r = container.getBoundingClientRect();
+                clCamera.aspect = r.width / r.height;
+                clCamera.updateProjectionMatrix();
+                clRenderer.setSize(r.width, r.height);
+            });
+            ro.observe(container);
+
+            // ─── Dashboard Data Bindings ───
+            const dashboardMetricConfig = {
+                temp: { decimals: 1, max: 100 },
+                humidity: { decimals: 1, max: 100 },
+                pressure: { decimals: 0, max: 1200 },
+                ph: { decimals: 1, max: 14 },
+                tds: { decimals: 0, max: 1000 },
+                h2s: { decimals: 2, max: 5 },
+                co: { decimals: 1, max: 50 },
+                o2: { decimals: 1, max: 25 },
+                waterLevel: { decimals: 1, max: 15 }
+            };
+
+            const dashboardState = {
+                connected: true,
+                lastUpdated: Date.now(),
+                metrics: {
+                    temp: 24.5,
+                    humidity: 68.2,
+                    pressure: 1012,
+                    ph: 7.8,
+                    tds: 342,
+                    h2s: 0.5,
+                    co: 2.1,
+                    o2: 20.9,
+                    waterLevel: 3.2
+                }
+            };
+
+            const valueBindings = {};
+            const statusBindings = {};
+            const barBindings = {};
+
+            Object.keys(dashboardMetricConfig).forEach((key) => {
+                valueBindings[key] = Array.from(document.querySelectorAll(`[data-sensor-value="${key}"]`));
+                statusBindings[key] = Array.from(document.querySelectorAll(`[data-sensor-status="${key}"]`));
+                barBindings[key] = Array.from(document.querySelectorAll(`[data-sensor-bar="${key}"]`));
+            });
+
+            const rawKeyMap = {
+                temp: 'temp',
+                humidity: 'humidity',
+                pressure: 'pressure',
+                ph: 'ph',
+                pH: 'ph',
+                tds: 'tds',
+                h2s: 'h2s',
+                h2s_ppm: 'h2s',
+                co: 'co',
+                co_ppm: 'co',
+                o2: 'o2',
+                do_mgL: 'o2',
+                waterLevel: 'waterLevel',
+                water_level: 'waterLevel'
+            };
+
+            function toFiniteNumber(value) {
+                const n = typeof value === 'number' ? value : Number(value);
+                return Number.isFinite(n) ? n : null;
+            }
+
+            function normalizeDashboardPayload(payload) {
+                let input = payload;
+                if (typeof input === 'string') {
+                    input = JSON.parse(input);
+                }
+
+                if (!input || typeof input !== 'object') return {};
+
+                const normalized = {};
+                Object.entries(rawKeyMap).forEach(([rawKey, metricKey]) => {
+                    if (input[rawKey] === undefined) return;
+                    const n = toFiniteNumber(input[rawKey]);
+                    if (n !== null) normalized[metricKey] = n;
+                });
+
+                return normalized;
+            }
+
+            function getConnectionState() {
+                if (!dashboardState.connected) return { text: 'Offline', className: 'status-offline' };
+                const stale = Date.now() - dashboardState.lastUpdated > 10000;
+                if (stale) return { text: 'Stale', className: 'status-stale' };
+                return { text: 'Online', className: 'status-online' };
+            }
+
+            function renderDashboard() {
+                const state = getConnectionState();
+
+                Object.entries(dashboardMetricConfig).forEach(([key, config]) => {
+                    const value = dashboardState.metrics[key];
+                    const formatted = Number.isFinite(value) ? value.toFixed(config.decimals) : '--';
+
+                    (valueBindings[key] || []).forEach((el) => {
+                        el.textContent = formatted;
+                    });
+
+                    (statusBindings[key] || []).forEach((el) => {
+                        el.textContent = state.text;
+                        el.classList.remove('status-online', 'status-stale', 'status-offline');
+                        el.classList.add(state.className);
+                    });
+
+                    (barBindings[key] || []).forEach((el) => {
+                        const pct = Number.isFinite(value) ? Math.max(0, Math.min(100, (value / config.max) * 100)) : 0;
+                        el.style.width = `${pct.toFixed(1)}%`;
+                    });
+                });
+            }
+
+            function setDashboardConnection(isConnected) {
+                dashboardState.connected = Boolean(isConnected);
+                if (dashboardState.connected) dashboardState.lastUpdated = Date.now();
+                renderDashboard();
+            }
+
+            function setDashboardData(payload, options = { markConnected: true }) {
+                const normalized = normalizeDashboardPayload(payload);
+                if (!Object.keys(normalized).length) return false;
+                Object.assign(dashboardState.metrics, normalized);
+                if (options.markConnected) {
+                    dashboardState.connected = true;
+                    dashboardState.lastUpdated = Date.now();
+                }
+                renderDashboard();
+                return true;
+            }
+
+            function processArduinoData(payload) {
+                try {
+                    const normalized = normalizeDashboardPayload(payload);
+                    const required = ['temp', 'pressure', 'humidity', 'tds', 'ph', 'h2s', 'co', 'o2'];
+                    if (!required.every((key) => Number.isFinite(normalized[key]))) return false;
+
+                    if (
+                        normalized.temp < -50 || normalized.temp > 100 ||
+                        normalized.pressure < 800 || normalized.pressure > 1200 ||
+                        normalized.humidity < 0 || normalized.humidity > 100 ||
+                        normalized.ph < 0 || normalized.ph > 14
+                    ) {
+                        return false;
+                    }
+
+                    return setDashboardData(normalized, { markConnected: true });
+                } catch (err) {
+                    console.warn('Invalid Arduino payload:', err);
+                    return false;
+                }
+            }
+
+            window.awrsDashboard = {
+                setData: (payload) => setDashboardData(payload, { markConnected: true }),
+                processArduinoData,
+                setConnection: setDashboardConnection,
+                getState: () => ({
+                    connected: dashboardState.connected,
+                    lastUpdated: dashboardState.lastUpdated,
+                    metrics: { ...dashboardState.metrics }
+                })
+            };
+
+            window.addEventListener('awrs:sensor-data', (event) => {
+                if (event && event.detail !== undefined) {
+                    processArduinoData(event.detail);
+                }
+            });
+
+            setInterval(() => {
+                if (dashboardState.connected) renderDashboard();
+            }, 1000);
+
+            renderDashboard();
+
+            // ─── Dashboard Toggle Logic ───
+            const dashBtn = document.getElementById('dash-btn');
+            const clContainer = document.getElementById('cl-container');
+            const dashBtnText = dashBtn;
+
+            dashBtn.addEventListener('click', () => {
+                clContainer.classList.toggle('dashboard-active');
+                const isOpen = clContainer.classList.contains('dashboard-active');
+
+                // the existing button text logic is fine, let's just make sure it correctly updates without losing icon
+                const existingIcon = dashBtn.querySelector('svg');
+                dashBtn.innerHTML = '';
+                if (existingIcon) dashBtn.appendChild(existingIcon);
+                const textNode = document.createTextNode(isOpen ? ' Close Dashboard' : ' View Dashboard');
+                dashBtn.appendChild(textNode);
+
+                // Force layout recalculate to ensure THREE.js resize observer fires cleanly
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
+            });
+        }
+
+        // ─── Lazy init: only when section scrolls into view ───
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    initCloserLook();
+                    observer.disconnect();
+                }
+            });
+        }, { threshold: 0.1 });
+        observer.observe(document.getElementById('closer-look'));
+    </script>
+</body>
+
+</html>

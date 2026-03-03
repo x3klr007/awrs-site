@@ -1,0 +1,99 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Thermometer, Droplets, Gauge, Wind, Target } from 'lucide-react';
+import { SensorData } from '@/types/sensor';
+
+interface WellIntegritySectionProps {
+    sensors: SensorData[];
+}
+
+const WellIntegritySection = ({ sensors }: WellIntegritySectionProps) => {
+    const getSensorIcon = (type: string) => {
+        switch (type) {
+            case 'temperature': return <Thermometer className="h-5 w-5" />;
+            case 'humidity': return <Droplets className="h-5 w-5" />;
+            case 'air_pressure': return <Gauge className="h-5 w-5" />;
+            default: return <Wind className="h-5 w-5" />;
+        }
+    };
+
+    const getSensorColor = (type: string) => {
+        switch (type) {
+            case 'temperature': return 'text-red-500';
+            case 'humidity': return 'text-blue-500';
+            case 'air_pressure': return 'text-purple-500';
+            default: return 'text-yellow-500';
+        }
+    };
+
+    const mainSensors = sensors.filter(s => ['temperature', 'humidity', 'air_pressure'].includes(s.type));
+    const gasSensors = sensors.filter(s => ['h2s_gas', 'co_gas', 'o2_gas'].includes(s.type));
+
+    return (
+        <Card className="w-full bg-gradient-to-br from-forest-light/5 to-forest-dark/10 border-forest-light/20">
+            <CardHeader className="pb-3">
+                <CardTitle className="text-forest-dark flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Well Integrity
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {/* Main Environmental Sensors */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {mainSensors.map((sensor) => (
+                        <div key={sensor.id} className="bg-forest-light/10 rounded-lg p-3 border border-forest-light/20">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <span className={getSensorColor(sensor.type)}>
+                                        {getSensorIcon(sensor.type)}
+                                    </span>
+                                    <span className="text-sm font-medium text-forest-dark">{sensor.name}</span>
+                                </div>
+                                <Badge variant={sensor.status === 'online' ? 'default' : 'destructive'} className="text-xs">
+                                    {sensor.status}
+                                </Badge>
+                            </div>
+                            <div className="text-2xl font-bold text-forest-primary">
+                                {sensor.value} <span className="text-sm font-normal">{sensor.unit}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Gas Sensors Section */}
+                <div className="bg-forest-dark/5 rounded-lg p-4 border border-forest-light/20">
+                    <h3 className="text-lg font-semibold text-forest-dark mb-3 flex items-center gap-2">
+                        <Wind className="h-4 w-4" />
+                        Gas Measurements
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {gasSensors.map((sensor) => (
+                            <div key={sensor.id} className="bg-white/50 rounded-lg p-3 border border-forest-light/20">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium text-forest-dark">
+                                        {sensor.type === 'h2s_gas' ? 'H₂S Gas' :
+                                            sensor.type === 'co_gas' ? 'CO Gas' : 'O₂ Gas'}
+                                    </span>
+                                    <Badge variant={sensor.status === 'online' ? 'default' : 'destructive'} className="text-xs">
+                                        {sensor.status}
+                                    </Badge>
+                                </div>
+                                <div className="text-xl font-bold text-forest-primary">
+                                    {sensor.value} <span className="text-sm font-normal">{sensor.unit}</span>
+                                </div>
+                                <div className="mt-1 w-full bg-forest-light/20 rounded-full h-1.5">
+                                    <div
+                                        className="bg-gradient-to-r from-forest-primary to-forest-secondary h-1.5 rounded-full transition-all duration-300"
+                                        style={{ width: `${Math.min((sensor.value / 100) * 100, 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+export default WellIntegritySection;
