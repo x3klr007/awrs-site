@@ -1883,7 +1883,7 @@
                 try {
                     const normalized = normalizeDashboardPayload(payload);
                     if (!normalized || Object.keys(normalized).length === 0) return false;
-                    
+
                     console.log('Processed Data:', normalized);
                     return setDashboardData(normalized, { markConnected: true });
                 } catch (err) {
@@ -1921,20 +1921,7 @@
             const dashBtnText = dashBtn;
 
             dashBtn.addEventListener('click', () => {
-                clContainer.classList.toggle('dashboard-active');
-                const isOpen = clContainer.classList.contains('dashboard-active');
-
-                // the existing button text logic is fine, let's just make sure it correctly updates without losing icon
-                const existingIcon = dashBtn.querySelector('svg');
-                dashBtn.innerHTML = '';
-                if (existingIcon) dashBtn.appendChild(existingIcon);
-                const textNode = document.createTextNode(isOpen ? ' Close Dashboard' : ' View Dashboard');
-                dashBtn.appendChild(textNode);
-
-                // Force layout recalculate to ensure THREE.js resize observer fires cleanly
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
-                }, 50);
+                window.location.href = 'index-react.html';
             });
         }
 
@@ -2008,7 +1995,7 @@
 
             connectBtn.addEventListener('click', async () => {
                 if (isConnected) return;
-                
+
                 try {
                     if (navigator.serial) {
                         await connectViaUSB();
@@ -2020,7 +2007,7 @@
                     updateButtonState(false);
                 }
             });
-            
+
             updateButtonState(false);
         });
     </script>
