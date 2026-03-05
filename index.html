@@ -1921,7 +1921,20 @@
             const dashBtnText = dashBtn;
 
             dashBtn.addEventListener('click', () => {
-                window.location.href = 'dashboard.html';
+                clContainer.classList.toggle('dashboard-active');
+                const isOpen = clContainer.classList.contains('dashboard-active');
+
+                // the existing button text logic is fine, let's just make sure it correctly updates without losing icon
+                const existingIcon = dashBtn.querySelector('svg');
+                dashBtn.innerHTML = '';
+                if (existingIcon) dashBtn.appendChild(existingIcon);
+                const textNode = document.createTextNode(isOpen ? ' Close Dashboard' : ' View Dashboard');
+                dashBtn.appendChild(textNode);
+
+                // Force layout recalculate to ensure THREE.js resize observer fires cleanly
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 50);
             });
         }
 
