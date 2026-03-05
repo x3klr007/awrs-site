@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWRS - Live Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #03060e;
+            --panel-bg: rgba(15, 20, 30, 0.6);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image:
+                radial-gradient(ellipse at top right, rgba(29, 78, 216, 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at bottom left, rgba(14, 165, 233, 0.1) 0%, transparent 40%);
+        }
+
+        /* --- Navbar --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(3, 6, 14, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--panel-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-logo {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-status {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-left: 12px;
+            padding-left: 12px;
+            border-left: 1px solid var(--panel-border);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        /* --- Dashboard Grid --- */
+        .dashboard {
+            flex: 1;
+            padding: 32px 40px;
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 24px;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 1400px) {
+            .dashboard {
+                grid-template-columns: 300px 1fr;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- Panel Standard --- */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            backdrop-filter: blur(20px);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #e2e8f0;
+        }
+
+        .panel-title svg {
+            color: var(--primary);
+        }
+
+        /* --- Status Badges --- */
+        .status-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-online {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* --- Metric Cards --- */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            color: #fff;
+        }
+
+        .metric-unit {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* --- Sensor Bars --- */
+        .sensor-bar-container {
+            margin-top: 4px;
+        }
+
+        .sensor-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .sensor-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #60a5fa);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sensor-bar-fill.danger {
+            background: linear-gradient(90deg, var(--danger), #f87171);
+        }
+
+        .sensor-bar-fill.success {
+            background: linear-gradient(90deg, var(--success), #34d399);
+        }
+
+        /* --- Main Camera Feed --- */
+        .camera-panel {
+            grid-column: 2;
+        }
+
+        @media (max-width: 1400px) {
+            .camera-panel {
+                grid-row: 1;
+                grid-column: 1 / -1;
+            }
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 12px;
+            width: 100%;
+            aspect-ratio: 16/9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
+            pointer-events: none;
+        }
+
+        .video-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .video-placeholder svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* --- Special Metric Styling --- */
+        .large-metric {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+            border-color: rgba(59, 130, 246, 0.2);
+            padding: 24px;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            border-radius: 16px;
+        }
+
+        .large-metric .metric-value {
+            font-size: 42px;
+            color: #60a5fa;
+            justify-content: center;
+            margin: 12px 0;
+        }
+
+        .water-level-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .water-level-visual {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid var(--panel-border);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .water-level-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: var(--primary);
+            transition: height 0.5s ease;
+            opacity: 0.8;
+        }
+
+        .water-level-text {
+            position: relative;
+            z-index: 2;
+            font-weight: 700;
+            font-size: 18px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .water-level-info {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">
+            <svg viewBox="0 0 24 24" fill="none" class="nav-logo" stroke="currentColor" stroke-width="2">
+                <path
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                </path>
+            </svg>
+            <div>
+                <div class="nav-title">AWRS Command Center</div>
+            </div>
+            <div class="nav-status">Live Telemetry & Control</div>
+        </a>
+        <div class="controls">
+            <a href="index.html" class="btn">Exit Dashboard</a>
+            <button class="btn btn-primary" id="connect-btn">Connect System</button>
+        </div>
+    </nav>
+
+    <div class="dashboard">
+
+        <!-- Left Column: Environment & Integrity -->
+        <div class="column">
+            <!-- Well Integrity -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 16v-4"></path>
+                            <path d="M12 8h.01"></path>
+                        </svg>
+                        Well Environmental
+                    </div>
+                    <span class="status-badge status-offline" data-sensor-status="temp">Offline</span>
+                </div>
+
+                <div class="metric-grid" style="grid-template-columns: 1fr;">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>Temperature</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>
+                            </svg>
+                        </div>
+                        <div class="metric-value"><span data-sensor-value="temp">--</span><span
+                                class="metric-unit">°C</span></div>
+                        <div class="sensor-bar-container">
+                            <div class="sensor-bar-bg">
+                                <div class="sensor-bar-fill" data-sensor-bar="temp" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Humidity</span>
+                            </div>
+                            <div class="metric-value"><span data-sensor-value="humidity">--</span><span
+                                    class="metric-unit">%</span></div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <span>Pressure</span>
+                            </div>
+                            <div class="metric-value" style="font-size: 22px;"><span
+                                    data-sensor-value="pressure">--</span><span class="metric-unit">hPa</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Water Quality -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                        </svg>
+                        Water Analysis
+                    </div>
+                    <span class="status-badge status-offline" data-sensor-status="ph">Offline</span>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>pH Level</span>
+                        </div>
+                        <div class="metric-value"><span data-sensor-value="ph">--</span></div>
+                        <div class="sensor-bar-container">
+                            <div class="sensor-bar-bg">
+                                <div class="sensor-bar-fill success" data-sensor-bar="ph" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>TDS (Minerals)</span>
+                        </div>
+                        <div class="metric-value"><span data-sensor-value="tds">--</span><span
+                                class="metric-unit">ppm</span></div>
+                        <div class="sensor-bar-container">
+                            <div class="sensor-bar-bg">
+                                <div class="sensor-bar-fill success" data-sensor-bar="tds" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Column: Core Feed -->
+        <div class="column camera-panel">
+            <div class="panel" style="height: 100%;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        Main HD Camera Feed
+                    </div>
+                    <span class="status-badge status-offline" id="camera-status">NO SIGNAL</span>
+                </div>
+
+                <div class="video-container">
+                    <div class="video-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path
+                                d="M2 12C2 6.47715 6.47715 2 12 2V2C17.5228 2 22 6.47715 22 12V12C22 17.5228 17.5228 22 12 22V22C6.47715 22 2 17.5228 2 12V12Z"
+                                stroke-dasharray="4 4"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <h3>Awaiting Video Stream</h3>
+                        <p style="font-size: 13px; margin-top: 8px;">Connect to robot network to receive feed</p>
+                    </div>
+                </div>
+
+                <div class="water-level-container" style="margin-top: auto;">
+                    <div class="water-level-visual">
+                        <div class="water-level-fill" id="water-level-fill"></div>
+                        <div class="water-level-text"><span data-sensor-value="waterLevel">--</span>m</div>
+                    </div>
+                    <div class="water-level-info">
+                        <div style="font-size: 14px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Sonar
+                            Distance Measurement</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Current distance from sensor to water
+                            surface.</div>
+                        <div class="sensor-bar-container" style="margin-top: 8px;">
+                            <div class="sensor-bar-bg">
+                                <div class="sensor-bar-fill" data-sensor-bar="waterLevel" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Gases & Analysis -->
+        <div class="column">
+            <!-- Gas Array -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Gas Spectrometry
+                    </div>
+                    <span class="status-badge status-offline" data-sensor-status="h2s">Offline</span>
+                </div>
+
+                <div class="metric-grid" style="grid-template-columns: 1fr;">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>H₂S (Hydrogen Sulfide)</span>
+                        </div>
+                        <div class="metric-value"><span data-sensor-value="h2s">--</span><span
+                                class="metric-unit">ppm</span></div>
+                        <div class="sensor-bar-container">
+                            <div class="sensor-bar-bg">
+                                <div class="sensor-bar-fill danger" data-sensor-bar="h2s" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>CO (Carbon Monoxide)</span>
+                        </div>
+                        <div class="metric-value"><span data-sensor-value="co">--</span><span
+                                class="metric-unit">ppm</span></div>
+                        <div class="sensor-bar-container">
+                            <div class="sensor-bar-bg">
+                                <div class="sensor-bar-fill danger" data-sensor-bar="co" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>O₂ (Oxygen)</span>
+                        </div>
+                        <div class="metric-value"><span data-sensor-value="o2">--</span><span
+                                class="metric-unit">%</span></div>
+                        <div class="sensor-bar-container">
+                            <div class="sensor-bar-bg">
+                                <div class="sensor-bar-fill success" data-sensor-bar="o2" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- XRF Analysis Placeholder -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        XRF Metal Integrity
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 20px 0; color: var(--text-muted); font-size: 13px;">
+                    <div>Wall Thickness Analysis Ready</div>
+                    <div style="margin-top: 8px;">Waiting for robot positioning...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Telemetry Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rawKeyMap = {
+                'T': 'temp',
+                'H': 'humidity',
+                'P': 'pressure',
+                'CO': 'co',
+                'H2S': 'h2s',
+                'O2': 'o2',
+                'PH': 'ph',
+                'TDS': 'tds',
+                'D': 'waterLevel'
+            };
+
+            const dashboardMetricConfig = {
+                temp: { max: 50, decimals: 1 },
+                humidity: { max: 100, decimals: 1 },
+                pressure: { max: 1100, decimals: 0 },
+                co: { max: 50, decimals: 1 },
+                h2s: { max: 20, decimals: 2 },
+                o2: { max: 25, decimals: 1 },
+                ph: { max: 14, decimals: 1 },
+                tds: { max: 1000, decimals: 0 },
+                waterLevel: { max: 10, decimals: 2 }
+            };
+
+            const dashboardState = {
+                connected: false,
+                lastUpdated: 0,
+                metrics: {
+                    temp: null, humidity: null, pressure: null,
+                    co: null, h2s: null, o2: null,
+                    ph: null, tds: null, waterLevel: null
+                }
+            };
+
+            const valueBindings = {};
+            const statusBindings = {};
+            const barBindings = {};
+
+            Object.keys(dashboardMetricConfig).forEach((key) => {
+                valueBindings[key] = document.querySelectorAll(`[data-sensor-value="${key}"]`);
+                statusBindings[key] = document.querySelectorAll(`[data-sensor-status="${key}"]`);
+                barBindings[key] = document.querySelectorAll(`[data-sensor-bar="${key}"]`);
+            });
+
+            function toFiniteNumber(val) {
+                const n = Number(val);
+                return Number.isFinite(n) ? n : null;
+            }
+
+            function normalizeDashboardPayload(payload) {
+                let input = payload;
+                if (typeof input === 'string') {
+                    if (!input.trim()) return {};
+                    const firstBrace = input.indexOf('{');
+                    const lastBrace = input.lastIndexOf('}');
+                    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                        input = input.substring(firstBrace, lastBrace + 1);
+                    }
+                    try {
+                        input = JSON.parse(input);
+                    } catch (e) {
+                        return {};
+                    }
+                }
+
+                if (!input || typeof input !== 'object') return {};
+
+                const normalized = {};
+                Object.entries(rawKeyMap).forEach(([rawKey, metricKey]) => {
+                    if (input[rawKey] === undefined) return;
+                    const n = toFiniteNumber(input[rawKey]);
+                    if (n !== null) normalized[metricKey] = n;
+                });
+                return normalized;
+            }
+
+            function getConnectionState() {
+                if (!dashboardState.connected) return { text: 'OFFLINE', className: 'status-offline' };
+                const stale = Date.now() - dashboardState.lastUpdated > 10000;
+                if (stale) return { text: 'STALE', className: 'status-offline' };
+                return { text: 'ONLINE', className: 'status-online' };
+            }
+
+            function renderDashboard() {
+                const state = getConnectionState();
+
+                Object.entries(dashboardMetricConfig).forEach(([key, config]) => {
+                    const value = dashboardState.metrics[key];
+                    const formatted = Number.isFinite(value) ? value.toFixed(config.decimals) : '--';
+
+                    (valueBindings[key] || []).forEach((el) => {
+                        el.textContent = formatted;
+                    });
+
+                    (statusBindings[key] || []).forEach((el) => {
+                        el.textContent = state.text;
+                        el.className = `status-badge ${state.className}`;
+                    });
+
+                    (barBindings[key] || []).forEach((el) => {
+                        // Maximize progress bar to config definition.
+                        const pct = Number.isFinite(value) ? Math.max(0, Math.min(100, (value / config.max) * 100)) : 0;
+                        el.style.width = `${pct.toFixed(1)}%`;
+                    });
+
+                    // Update Circle fill specifically for waterLevel
+                    if (key === 'waterLevel') {
+                        const fillEl = document.getElementById('water-level-fill');
+                        if (fillEl) {
+                            const pct = Number.isFinite(value) ? Math.max(0, Math.min(100, (value / config.max) * 100)) : 0;
+                            // Reverse the fill so lower distance = more fill? Actually depth usually inversely visual. Leave as direct % for now.
+                            fillEl.style.height = `${pct}%`;
+                        }
+                    }
+                });
+            }
+
+            setInterval(() => {
+                if (dashboardState.connected) renderDashboard();
+            }, 1000);
+
+            renderDashboard();
+
+            // Web Serial Connect Logic
+            const connectBtn = document.getElementById('connect-btn');
+            let isConnected = false;
+            let dataBuffer = "";
+
+            async function connectViaUSB() {
+                try {
+                    connectBtn.innerHTML = 'Connecting...';
+                    const port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 });
+
+                    isConnected = true;
+                    connectBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> System Connected';
+                    connectBtn.style.backgroundColor = 'var(--success)';
+                    connectBtn.style.borderColor = 'var(--success)';
+                    connectBtn.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+
+                    dashboardState.connected = true;
+                    dashboardState.lastUpdated = Date.now();
+                    renderDashboard();
+
+                    const textDecoder = new TextDecoderStream();
+                    port.readable.pipeTo(textDecoder.writable);
+                    const reader = textDecoder.readable.getReader();
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        dataBuffer += value;
+
+                        while (dataBuffer.includes('\n')) {
+                            const newlineIndex = dataBuffer.indexOf('\n');
+                            const jsonString = dataBuffer.substring(0, newlineIndex).trim();
+                            dataBuffer = dataBuffer.substring(newlineIndex + 1);
+                            if (jsonString) {
+                                const normalized = normalizeDashboardPayload(jsonString);
+                                if (Object.keys(normalized).length > 0) {
+                                    Object.assign(dashboardState.metrics, normalized);
+                                    dashboardState.connected = true;
+                                    dashboardState.lastUpdated = Date.now();
+                                    renderDashboard();
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Serial error:", error);
+                    isConnected = false;
+                    dashboardState.connected = false;
+                    connectBtn.textContent = 'Connect System';
+                    connectBtn.style = '';
+                    renderDashboard();
+                }
+            }
+
+            connectBtn.addEventListener('click', async () => {
+                if (isConnected) return;
+                try {
+                    if (navigator.serial) {
+                        await connectViaUSB();
+                    } else {
+                        alert("Web Serial API is not supported in this browser. Please use Chrome or Edge.");
+                    }
+                } catch (error) {
+                    console.error("Connection failed", error);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
