@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWRS - Supporters and Investors</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            background-image: url('WhatsApp Image 2026-03-05 at 12.41.30 PM.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Nav Bar - Replicated exactly from index.html */
+        nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 30px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .nav-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -0.05em;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logo-img {
+            height: 24px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #fff;
+        }
+
+        /* Investors Page Content */
+        .investors-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 180px 20px 60px;
+            /* Offset for fixed nav */
+            text-align: center;
+            z-index: 10;
+        }
+
+        .investors-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .investors-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 100px auto;
+            line-height: 1.6;
+        }
+
+        .logos-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 100px;
+            /* Spacing between rows */
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .logos-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 120px;
+            /* Spacing between logos in a row */
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .logo-item {
+            transition: transform 0.4s ease, filter 0.4s ease;
+            filter: grayscale(20%) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-item:hover {
+            transform: translateY(-10px);
+            filter: grayscale(0%) drop-shadow(0 20px 30px rgba(0, 0, 0, 0.8));
+        }
+
+        .logo-img {
+            max-width: 320px;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 12px;
+            /* Smoothes out the edges for logos with white backgrounds */
+        }
+
+        .logo-ewa {
+            max-width: 450px;
+            max-height: 200px;
+            transform: scale(1.6);
+            transform-origin: center;
+        }
+
+        /* Prevent hover from compounding the scale incorrectly */
+        .logo-item:hover .logo-ewa {
+            transform: scale(1.6);
+        }
+
+        .text-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 50px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            min-width: 250px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .text-logo-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .text-logo-sub {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        /* Special sizing */
+        .logo-tuwaiq {
+            max-width: 450px;
+            max-height: 200px;
+        }
+
+        .logo-ewa {
+            max-width: 300px;
+            max-height: 150px;
+        }
+
+        .logo-ksu {
+            max-width: 360px;
+            max-height: 160px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .investors-title {
+                font-size: 2.5rem;
+            }
+
+            .logos-row {
+                gap: 60px;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- GLOBAL NAV -->
+    <nav>
+        <a href="index.html" class="nav-logo-container">
+            <img src="image.png" alt="AWRS Logo" class="nav-logo-img">
+            <div class="nav-logo">AWRS</div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html#closer-look">3D Showcase and Explanation</a>
+            <a href="investors.html">Supporters and Investors</a>
+            <a href="index.html#contributions">Contributors</a>
+        </div>
+    </nav>
+
+    <!-- PAGE CONTENT -->
+    <div class="investors-container">
+        <h1 class="investors-title">Our Supporters & Investors</h1>
+        <p class="investors-subtitle">Empowering the future of autonomous well integrity through strategic partnerships
+            and visionary backing.</p>
+
+        <div class="logos-wrapper">
+            <!-- Top Row: EWA and Tuwaiq -->
+            <div class="logos-row">
+                <div class="logo-item">
+                    <!-- Energy & Water Academy logo -->
+                    <img src="ewa_logo_perfect.png" alt="Energy & Water Academy" class="logo-img logo-ewa">
+                </div>
+                <div class="logo-item">
+                    <!-- Tuwaiq Logo (Local Webp) -->
+                    <img src="twq_white-20_1.webp" alt="Tuwaiq Academy" class="logo-img logo-tuwaiq">
+                </div>
+            </div>
+
+            <!-- Bottom Row: King Saud University -->
+            <div class="logos-row">
+                <div class="logo-item">
+                    <!-- King Saud University Logo -->
+                    <img src="ksu_logo_perfect.png" alt="King Saud University" class="logo-img logo-ksu">
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

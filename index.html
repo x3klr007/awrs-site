@@ -1803,7 +1803,19 @@
             function normalizeDashboardPayload(payload) {
                 let input = payload;
                 if (typeof input === 'string') {
-                    input = JSON.parse(input);
+                    // Ignore empty or whitespace-only strings
+                    if (!input.trim()) return {};
+                    // Try to extract JSON if it's embedded in other text
+                    const firstBrace = input.indexOf('{');
+                    const lastBrace = input.lastIndexOf('}');
+                    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                        input = input.substring(firstBrace, lastBrace + 1);
+                    }
+                    try {
+                        input = JSON.parse(input);
+                    } catch (e) {
+                        return {}; // Silently fail on partial JSON chunks
+                    }
                 }
 
                 if (!input || typeof input !== 'object') return {};
@@ -1870,18 +1882,9 @@
             function processArduinoData(payload) {
                 try {
                     const normalized = normalizeDashboardPayload(payload);
-                    const required = ['temp', 'pressure', 'humidity', 'tds', 'ph', 'h2s', 'co', 'o2'];
-                    if (!required.every((key) => Number.isFinite(normalized[key]))) return false;
-
-                    if (
-                        normalized.temp < -50 || normalized.temp > 100 ||
-                        normalized.pressure < 800 || normalized.pressure > 1200 ||
-                        normalized.humidity < 0 || normalized.humidity > 100 ||
-                        normalized.ph < 0 || normalized.ph > 14
-                    ) {
-                        return false;
-                    }
-
+                    if (!normalized || Object.keys(normalized).length === 0) return false;
+                    
+                    console.log('Processed Data:', normalized);
                     return setDashboardData(normalized, { markConnected: true });
                 } catch (err) {
                     console.warn('Invalid Arduino payload:', err);
@@ -1945,6 +1948,81 @@
             });
         }, { threshold: 0.1 });
         observer.observe(document.getElementById('closer-look'));
+
+        // ─── ESP32 Connection Logic ───
+        document.addEventListener('DOMContentLoaded', () => {
+            const connectBtn = document.querySelector('.awrs-cta');
+            if (!connectBtn) return;
+
+            let isConnected = false;
+            let dataBuffer = "";
+
+            function updateButtonState(connected) {
+                isConnected = connected;
+                if (connected) {
+                    connectBtn.textContent = 'Arduino Connected ✓';
+                    connectBtn.style.backgroundColor = 'var(--emerald-500)';
+                    connectBtn.style.color = '#fff';
+                    connectBtn.style.borderColor = 'var(--emerald-400)';
+                } else {
+                    connectBtn.textContent = 'Connect';
+                    connectBtn.style.backgroundColor = '';
+                    connectBtn.style.color = '';
+                    connectBtn.style.borderColor = '';
+                }
+                if (window.awrsDashboard) {
+                    window.awrsDashboard.setConnection(connected);
+                }
+            }
+
+            async function connectViaUSB() {
+                try {
+                    connectBtn.textContent = 'Connecting...';
+                    const port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 });
+                    updateButtonState(true);
+
+                    const textDecoder = new TextDecoderStream();
+                    port.readable.pipeTo(textDecoder.writable);
+                    const reader = textDecoder.readable.getReader();
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        dataBuffer += value;
+
+                        while (dataBuffer.includes('\n')) {
+                            const newlineIndex = dataBuffer.indexOf('\n');
+                            const jsonString = dataBuffer.substring(0, newlineIndex).trim();
+                            dataBuffer = dataBuffer.substring(newlineIndex + 1);
+                            if (jsonString && window.awrsDashboard && window.awrsDashboard.processArduinoData) {
+                                window.awrsDashboard.processArduinoData(jsonString);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Serial connection failed:", error);
+                    updateButtonState(false);
+                }
+            }
+
+            connectBtn.addEventListener('click', async () => {
+                if (isConnected) return;
+                
+                try {
+                    if (navigator.serial) {
+                        await connectViaUSB();
+                    } else {
+                        alert("No connection method available. Use Chrome or Edge.");
+                        updateButtonState(false);
+                    }
+                } catch (error) {
+                    updateButtonState(false);
+                }
+            });
+            
+            updateButtonState(false);
+        });
     </script>
 </body>
 
